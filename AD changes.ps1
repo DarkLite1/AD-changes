@@ -103,24 +103,185 @@ Begin {
             }
 
             $adProperties = @(
-                'AccountExpirationDate', 'Department', 'Description',
-                'DisplayName', 'OU', 'Country', 'Company', 
-                'EmailAddress', 'EmployeeID', 'EmployeeType', 'Enabled',
-                'HeidelbergCementBillingID', 'HomePhone', 'Fax', 'FirstName', 
-                'HomeDirectory', 'Info', 'IpPhone', 'LastName', 'LastLogonDate',
-                'Manager', 'Notes', 'Office', 'OfficePhone', 'MobilePhone', 'Pager', 'PasswordExpired', 'PasswordNeverExpires', 
-                'SamAccountName', 'LockedOut', 'LogonScript', 'TSUserProfile', 'TSHomeDirectory', 'TSHomeDrive', 'TSAllowLogon',
-                'Title', 'UserPrincipalName', 'whenChanged', 'whenCreated'
+                @{
+                    Name       = 'AccountExpirationDate'
+                    Expression = { $_.AccountExpirationDate } 
+                },
+                @{
+                    Name       = 'Country'
+                    Expression = { $_.co } 
+                },
+                @{
+                    Name       = 'Company'
+                    Expression = { $_.Company } 
+                },
+                @{
+                    Name       = 'Department'
+                    Expression = { $_.Department } 
+                },
+                @{
+                    Name       = 'Description'
+                    Expression = { $_.Description } 
+                },
+                @{
+                    Name       = 'DisplayName'
+                    Expression = { $_.DisplayName } 
+                },
+                @{
+                    Name       = 'EmailAddress'
+                    Expression = { $_.EmailAddress } 
+                },
+                @{
+                    Name       = 'EmployeeID'
+                    Expression = { $_.EmployeeID } 
+                },
+                @{
+                    Name       = 'EmployeeType'
+                    Expression = { $_.EmployeeType } 
+                },
+                @{
+                    Name       = 'Enabled'
+                    Expression = { $_.Enabled } 
+                },
+                @{
+                    Name       = 'Fax'
+                    Expression = { $_.Fax } 
+                },
+                @{
+                    Name       = 'FirstName'
+                    Expression = { $_.GivenName } 
+                }, 
+                @{
+                    Name       = 'HeidelbergCementBillingID'
+                    Expression = { $_.extensionAttribute8 } 
+                },
+                @{
+                    Name       = 'HomePhone'
+                    Expression = { $_.HomePhone } 
+                },
+                @{
+                    Name       = 'HomeDirectory'
+                    Expression = { $_.HomeDirectory } 
+                },
+                @{
+                    Name       = 'IpPhone'
+                    Expression = { $_.IpPhone } 
+                },
+                @{
+                    Name       = 'LastName'
+                    Expression = { $_.Surname } 
+                }, 
+                @{
+                    Name       = 'LastLogonDate'
+                    Expression = { $_.LastLogonDate } 
+                }, 
+                @{
+                    Name       = 'LockedOut'
+                    Expression = { $_.LockedOut } 
+                }, 
+                @{
+                    Name       = 'Manager'
+                    Expression = { 
+                        if ($_.manager) { Get-ADDisplayNameHC $_.manager }
+                    }
+                }, 
+                @{
+                    Name       = 'MobilePhone'
+                    Expression = { $_.MobilePhone } 
+                }, 
+                @{
+                    Name       = 'Name'
+                    Expression = { $_.Name } 
+                }, 
+                @{
+                    Name       = 'Notes'
+                    Expression = { $_.info -replace "`n", ' ' } 
+                },
+                @{
+                    Name       = 'Office'
+                    Expression = { $_.Office } 
+                }, 
+                @{
+                    Name       = 'OfficePhone'
+                    Expression = { $_.OfficePhone } 
+                }, 
+                @{
+                    Name       = 'OU'
+                    Expression = {
+                        ConvertTo-OuNameHC $_.CanonicalName
+                    }
+                },
+                @{
+                    Name       = 'Pager'
+                    Expression = { $_.Pager } 
+                }, 
+                @{
+                    Name       = 'PasswordExpired'
+                    Expression = { $_.PasswordExpired } 
+                }, 
+                @{
+                    Name       = 'PasswordNeverExpires'
+                    Expression = { $_.PasswordNeverExpires } 
+                }, 
+                @{
+                    Name       = 'SamAccountName'
+                    Expression = { $_.SamAccountName } 
+                }, 
+                @{
+                    Name       = 'LogonScript'
+                    Expression = { $_.scriptPath } 
+                }, 
+                @{
+                    Name       = 'Title'
+                    Expression = { $_.Title } 
+                }, 
+                @{
+                    Name       = 'TSAllowLogon'
+                    Expression = {
+                        Get-ADTsProfileHC $_.DistinguishedName 'AllowLogon'
+                    }
+                },
+                @{
+                    Name       = 'TSHomeDirectory'
+                    Expression = { 
+                        Get-ADTsProfileHC $_.DistinguishedName 'HomeDirectory' 
+                    }
+                }, 
+                @{
+                    Name       = 'TSHomeDrive'
+                    Expression = {
+                        Get-ADTsProfileHC $_.DistinguishedName 'HomeDrive'
+                    }
+                }, 
+                @{
+                    Name       = 'TSUserProfile'
+                    Expression = {
+                        Get-ADTsProfileHC $_.DistinguishedName 'UserProfile' 
+                    } 
+                },
+                @{
+                    Name       = 'UserPrincipalName'
+                    Expression = { $_.UserPrincipalName } 
+                }, 
+                @{
+                    Name       = 'WhenChanged'
+                    Expression = { $_.WhenChanged } 
+                }, 
+                @{
+                    Name       = 'WhenCreated'
+                    Expression = { $_.WhenCreated } 
+                }
             )
+
             $adPropertyToMonitor | Where-Object { 
-                $adProperties -notContains $_ 
+                $adProperties.Name -notContains $_ 
             } | ForEach-Object {
-                throw "Property '$_' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are: $adProperties"
+                throw "Property '$_' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
             }
             $adPropertyInReport | Where-Object { 
-                $adProperties -notContains $_ 
+                $adProperties.Name -notContains $_ 
             } | ForEach-Object {
-                throw "Property '$_' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are: $adProperties"
+                throw "Property '$_' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
             }
             #endregion
         }
@@ -138,84 +299,13 @@ Begin {
 
 Process {
     Try {
-        
-
         #region Get AD users
         [array]$adUsers = foreach ($ou in $adOU) {
             $M = "Get user accounts in OU '$ou'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
             Get-ADUser -OU $ou -Properties * |
-            Select-Object -Property SamAccountName, 
-            DisplayName, Name, 
-            @{
-                Name       = 'LastName'
-                Expression = { $_.Surname } 
-            }, 
-            @{
-                Name       = 'FirstName'
-                Expression = { $_.GivenName } 
-            }, 
-            Title, Department, Company,
-            @{
-                Name       = 'Manager'
-                Expression = { 
-                    if ($_.manager) { Get-ADDisplayNameHC $_.manager }
-                }
-            }, 
-            EmployeeID,
-            @{
-                Name       = 'HeidelbergCementBillingID'
-                Expression = { $_.extensionAttribute8 } 
-            },
-            employeeType,
-            @{
-                Name       = 'OU'
-                Expression = {
-                    ConvertTo-OuNameHC $_.CanonicalName
-                }
-            },
-            Description,
-            @{
-                Name       = 'Country'
-                Expression = { $_.co } 
-            },
-            Office, OfficePhone, HomePhone, MobilePhone, ipPhone, Fax, pager,
-            @{
-                Name       = 'Notes'
-                Expression = { $_.info -replace "`n", ' ' } 
-            },
-            EmailAddress,
-            @{
-                Name       = 'LogonScript'
-                Expression = { $_.scriptPath } 
-            }, 
-            @{
-                Name       = 'TSUserProfile'
-                Expression = {
-                    Get-ADTsProfileHC $_.DistinguishedName 'UserProfile' 
-                } 
-            }, 
-            @{
-                Name       = 'TSHomeDirectory'
-                Expression = { 
-                    Get-ADTsProfileHC $_.DistinguishedName 'HomeDirectory' 
-                }
-            }, 
-            @{
-                Name       = 'TSHomeDrive'
-                Expression = {
-                    Get-ADTsProfileHC $_.DistinguishedName 'HomeDrive'
-                }
-            }, 
-            @{
-                Name       = 'TSAllowLogon'
-                Expression = {
-                    Get-ADTsProfileHC $_.DistinguishedName 'AllowLogon'
-                }
-            },
-            HomeDirectory, AccountExpirationDate, LastLogonDate, PasswordExpired, 
-            PasswordNeverExpires, LockedOut, Enabled, WhenCreated, WhenChanged
+            Select-Object -Property $adProperties
         }
         #endregion
 
