@@ -8,9 +8,9 @@ BeforeAll {
     }
 
     $testInputFile = @{
-        AdFields = @{
-            Monitor = @('Office')
-            Report  = @('SamAccountName', 'Office', 'Title')
+        AD       = @{
+            PropertyToMonitor = @('Office')
+            PropertyInReport  = @('SamAccountName', 'Office', 'Title')
         }
         OU       = @('OU=BEL,OU=EU,DC=contoso,DC=com')
         SendMail = @{
@@ -74,9 +74,34 @@ Describe 'send an e-mail to the admin when' {
         }
         It 'is missing property <_>' -ForEach @('OU') {
             $testJsonFile = @{
-                AdFields = @{
-                    Monitor = @('Office')
-                    Report  = @('SamAccountName', 'Office', 'Title')
+                AD       = @{
+                    PropertyToMonitor = @('Office')
+                    PropertyInReport  = @('SamAccountName', 'Office', 'Title')
+                }
+                OU       = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                SendMail = @{
+                    When = 'Always'
+                    To   = 'bob@contoso.com'
+                }
+            }
+            $testJsonFile.Remove($_)
+            $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+
+            .$testScript @testParams
+                        
+            Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+                (&$MailAdminParams) -and 
+                ($Message -like "*Property '$_' not found*")
+            }
+            Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                $EntryType -eq 'Error'
+            }
+        }
+        It 'is missing property AD.PropertyToMonitor' -ForEach @('OU') {
+            $testJsonFile = @{
+                AD       = @{
+                    PropertyToMonitor = @('Office')
+                    PropertyInReport  = @('SamAccountName', 'Office', 'Title')
                 }
                 OU       = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 SendMail = @{

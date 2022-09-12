@@ -20,11 +20,11 @@
         Collection of organizational units in AD where to search for user 
         accounts.
 
-    .PARAMETER AdFields.Monitor
+    .PARAMETER AD.PropertyToMonitor
         Collection of AD fields where to look for changes. All other fields are 
         disregarded.
 
-    .PARAMETER AdFields.Report
+    .PARAMETER AD.PropertyInReport
         Collection of AD fields to export to the Excel file where the changes
         are reported.
 
@@ -81,16 +81,16 @@ Begin {
             #endregion
 
             #region Test .json file 
-            if (-not ($ADfieldsToMonitor = $file.AdFields.Monitor)) {
-                throw "Property 'AdFields.Monitor' is mandatory."
+            if (-not ($adPropertyToMonitor = $file.AD.PropertyToMonitor)) {
+                throw "Property 'AD.PropertyToMonitor' is mandatory."
             }
-            if (-not ($ADfieldsToReport = $file.AdFields.Report)) {
-                throw "Property 'AdFields.Report' is mandatory."
+            if (-not ($adPropertyInReport = $file.AD.PropertyInReport)) {
+                throw "Property 'AD.PropertyInReport' is mandatory."
             }
-            if (-not ($OU = $file.OU)) {
+            if (-not ($adOU = $file.AD.OU)) {
                 throw "Property 'OU' not found."
             }
-            if (-not ($MailTo = $file.SendMail.To)) {
+            if (-not ($mailTo = $file.SendMail.To)) {
                 throw "Property 'SendMail.To' is mandatory."
             }
             if (
@@ -98,7 +98,7 @@ Begin {
             ) {
                 throw "The value '$($file.SendMail.When)' in 'SendMail.When' is not supported. Only the value 'Always' or 'OnlyWhenChangesAreFound' can be used."
             }
-            $MailWhen = $file.SendMail.When 
+            $mailWhen = $file.SendMail.When 
             #endregion
         }
         catch {
@@ -115,8 +115,8 @@ Begin {
 
 Process {
     Try {
-        $adUsers = foreach ($o in $OU) {
-            Get-ADUser -OU $OU
+        $adUsers = foreach ($ou in $adOU) {
+            Get-ADUser -OU $ou
         }
     }
     Catch {
