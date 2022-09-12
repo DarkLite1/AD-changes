@@ -101,6 +101,26 @@ Begin {
             ) {
                 throw "The value '$mailWhen' in 'SendMail.When' is not supported. Only the value 'Always' or 'OnlyWhenChangesAreFound' can be used."
             }
+
+            $adProperties = @(
+                'AccountExpirationDate', 'department', 'description',
+                'displayName', 'CanonicalName', 'co', 'company',
+                'EmailAddress', 'EmployeeID', 'extensionAttribute8',
+                'employeeType', 'Fax', 'homeDirectory', 'info', 'ipPhone',
+                'manager', 'Office', 'OfficePhone', 'HomePhone', 'MobilePhone',
+                'pager', 'PasswordNeverExpires', 'SamAccountName', 'scriptPath',
+                'title', 'UserPrincipalName', 'whenChanged', 'whenCreated'
+            )
+            $adPropertyToMonitor | Where-Object { 
+                $adProperties -notContains $_ 
+            } | ForEach-Object {
+                throw "Property '$_' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are: $adProperties"
+            }
+            $adPropertyInReport | Where-Object { 
+                $adProperties -notContains $_ 
+            } | ForEach-Object {
+                throw "Property '$_' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are: $adProperties"
+            }
             #endregion
         }
         catch {
@@ -117,13 +137,92 @@ Begin {
 
 Process {
     Try {
-        #region Get users
-        $adUsers = foreach ($ou in $adOU) {
+        
+
+        #region Get AD users
+        [array]$adUsers = foreach ($ou in $adOU) {
             $M = "Get user accounts in OU '$ou'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
-            Get-ADUser -OU $ou
+            Get-ADUser -OU $ou -Properties $adProperties |
+            Select-Object -Property @{
+                Name       = 'CreationDate'
+                Expression = { $_.whenCreated } 
+            }, 
+            DisplayName, Name, SamAccountName,
+            @{
+                Name       = 'LastName'
+                Expression = { $_.Surname } 
+            }, 
+            @{
+                Name       = 'FirstName'
+                Expression = { $_.GivenName } 
+            }, 
+            Title, Department, Company,
+            @{
+                Name       = 'Manager'
+                Expression = { 
+                    if ($_.manager) { Get-ADDisplayNameHC $_.manager }
+                }
+            }, 
+            EmployeeID,
+            @{
+                Name       = 'HeidelbergCementBillingID'
+                Expression = { $_.extensionAttribute8 } 
+            },
+            employeeType,
+            @{
+                Name       = 'OU'
+                Expression = {
+                    ConvertTo-OuNameHC $_.CanonicalName
+                }
+            },
+            Description,
+            @{
+                Name       = 'Country'
+                Expression = { $_.co } 
+            },
+            Office, OfficePhone, HomePhone, MobilePhone, ipPhone, Fax, pager,
+            @{
+                Name       = 'Notes'
+                Expression = { $_.info -replace "`n", ' ' } 
+            },
+            EmailAddress,
+            @{
+                Name       = 'LogonScript'
+                Expression = { $_.scriptPath } 
+            }, 
+            @{
+                Name       = 'TSUserProfile'
+                Expression = {
+                    Get-ADTsProfileHC $_.DistinguishedName 'UserProfile' 
+                } 
+            }, 
+            @{
+                Name       = 'TSHomeDirectory'
+                Expression = { 
+                    Get-ADTsProfileHC $_.DistinguishedName 'HomeDirectory' 
+                }
+            }, 
+            @{
+                Name       = 'TSHomeDrive'
+                Expression = {
+                    Get-ADTsProfileHC $_.DistinguishedName 'HomeDrive'
+                }
+            }, 
+            @{
+                Name       = 'TSAllowLogon'
+                Expression = {
+                    Get-ADTsProfileHC $_.DistinguishedName 'AllowLogon'
+                }
+            },
+            HomeDirectory, AccountExpirationDate, LastLogonDate, PasswordExpired, 
+            PasswordNeverExpires, LockedOut, Enabled
         }
+        #endregion
+
+        #region Export users to Excel file
+
         #endregion
     }
     Catch {

@@ -111,5 +111,53 @@ Describe 'send an e-mail to the admin when' {
                 $EntryType -eq 'Error'
             }
         }
+        It 'AD.PropertyInReport contains an unknown AD property' {
+            $testJsonFile = @{
+                AD       = @{
+                    PropertyToMonitor = @('Office')
+                    PropertyInReport  = @('SamAccountName', 'Office', 'foobar')
+                    OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                }
+                SendMail = @{
+                    When = 'Always'
+                    To   = 'bob@contoso.com'
+                }
+            }
+            $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+
+            .$testScript @testParams
+                        
+            Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+                (&$MailAdminParams) -and 
+                ($Message -like "*Property 'foobar' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are*")
+            }
+            Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                $EntryType -eq 'Error'
+            }
+        }
+        It 'AD.PropertyToMonitor contains an unknown AD property' {
+            $testJsonFile = @{
+                AD       = @{
+                    PropertyToMonitor = @('foobar')
+                    PropertyInReport  = @('SamAccountName', 'Office', 'Title')
+                    OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                }
+                SendMail = @{
+                    When = 'Always'
+                    To   = 'bob@contoso.com'
+                }
+            }
+            $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+
+            .$testScript @testParams
+                        
+            Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+                (&$MailAdminParams) -and 
+                ($Message -like "*Property 'foobar' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are*")
+            }
+            Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                $EntryType -eq 'Error'
+            }
+        }
     }
 }
