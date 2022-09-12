@@ -103,13 +103,14 @@ Begin {
             }
 
             $adProperties = @(
-                'AccountExpirationDate', 'department', 'description',
-                'displayName', 'CanonicalName', 'co', 'company',
-                'EmailAddress', 'EmployeeID', 'extensionAttribute8',
-                'employeeType', 'Fax', 'homeDirectory', 'info', 'ipPhone',
-                'manager', 'Office', 'OfficePhone', 'HomePhone', 'MobilePhone',
-                'pager', 'PasswordNeverExpires', 'SamAccountName', 'scriptPath',
-                'title', 'UserPrincipalName', 'whenChanged', 'whenCreated'
+                'AccountExpirationDate', 'Department', 'Description',
+                'DisplayName', 'OU', 'Country', 'Company', 
+                'EmailAddress', 'EmployeeID', 'EmployeeType', 'Enabled',
+                'HeidelbergCementBillingID', 'HomePhone', 'Fax', 'FirstName', 
+                'HomeDirectory', 'Info', 'IpPhone', 'LastName', 'LastLogonDate',
+                'Manager', 'Notes', 'Office', 'OfficePhone', 'MobilePhone', 'Pager', 'PasswordExpired', 'PasswordNeverExpires', 
+                'SamAccountName', 'LockedOut', 'LogonScript', 'TSUserProfile', 'TSHomeDirectory', 'TSHomeDrive', 'TSAllowLogon',
+                'Title', 'UserPrincipalName', 'whenChanged', 'whenCreated'
             )
             $adPropertyToMonitor | Where-Object { 
                 $adProperties -notContains $_ 
@@ -144,12 +145,9 @@ Process {
             $M = "Get user accounts in OU '$ou'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
-            Get-ADUser -OU $ou -Properties $adProperties |
-            Select-Object -Property @{
-                Name       = 'CreationDate'
-                Expression = { $_.whenCreated } 
-            }, 
-            DisplayName, Name, SamAccountName,
+            Get-ADUser -OU $ou -Properties * |
+            Select-Object -Property SamAccountName, 
+            DisplayName, Name, 
             @{
                 Name       = 'LastName'
                 Expression = { $_.Surname } 
@@ -217,7 +215,7 @@ Process {
                 }
             },
             HomeDirectory, AccountExpirationDate, LastLogonDate, PasswordExpired, 
-            PasswordNeverExpires, LockedOut, Enabled
+            PasswordNeverExpires, LockedOut, Enabled, WhenCreated, WhenChanged
         }
         #endregion
 
