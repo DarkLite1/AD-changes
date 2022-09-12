@@ -80,25 +80,27 @@ Begin {
             $file = Get-Content $ImportFile -Raw -EA Stop | ConvertFrom-Json
             #endregion
 
-            #region Test .json file 
+            #region Test .json file
             if (-not ($adPropertyToMonitor = $file.AD.PropertyToMonitor)) {
-                throw "Property 'AD.PropertyToMonitor' is mandatory."
+                throw "Property 'AD.PropertyToMonitor' not found."
             }
             if (-not ($adPropertyInReport = $file.AD.PropertyInReport)) {
-                throw "Property 'AD.PropertyInReport' is mandatory."
+                throw "Property 'AD.PropertyInReport' not found."
             }
             if (-not ($adOU = $file.AD.OU)) {
-                throw "Property 'OU' not found."
+                throw "Property 'AD.OU' not found."
             }
             if (-not ($mailTo = $file.SendMail.To)) {
-                throw "Property 'SendMail.To' is mandatory."
+                throw "Property 'SendMail.To' not found."
+            }
+            if (-not ($mailWhen = $file.SendMail.When)) {
+                throw "Property 'SendMail.When' not found."
             }
             if (
-                $file.SendMail.When -notMatch '^Always$|^OnlyWhenChangesAreFound$'
+                $mailWhen -notMatch '^Always$|^OnlyWhenChangesAreFound$'
             ) {
-                throw "The value '$($file.SendMail.When)' in 'SendMail.When' is not supported. Only the value 'Always' or 'OnlyWhenChangesAreFound' can be used."
+                throw "The value '$mailWhen' in 'SendMail.When' is not supported. Only the value 'Always' or 'OnlyWhenChangesAreFound' can be used."
             }
-            $mailWhen = $file.SendMail.When 
             #endregion
         }
         catch {
