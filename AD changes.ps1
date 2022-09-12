@@ -117,9 +117,14 @@ Begin {
 
 Process {
     Try {
+        #region Get users
         $adUsers = foreach ($ou in $adOU) {
+            $M = "Get user accounts in OU '$ou'"
+            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+
             Get-ADUser -OU $ou
         }
+        #endregion
     }
     Catch {
         Write-Warning $_
