@@ -304,7 +304,14 @@ Process {
             $M = "Get user accounts in OU '$ou'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
-            Get-ADUser -OU $ou -Properties * |
+            Get-ADUser -OU $ou -Properties 'AccountExpirationDate', 
+            'CanonicalName', 'Co', 'Company', 'Department', 'Description', 
+            'DisplayName', 'DistinguishedName', 'EmailAddress', 'EmployeeID', 
+            'EmployeeType', 'Enabled', 'extensionAttribute8', 'Fax', 'GivenName', 'HomePhone', 'HomeDirectory', 'Info', 'IpPhone', 
+            'Surname', 'LastLogonDate', 'LockedOut', 'Manager', 'MobilePhone', 
+            'Name', 'Office', 'OfficePhone', 'Pager', 'PasswordExpired', 
+            'PasswordNeverExpires', 'SamAccountName', 'scriptPath', 'Title', 
+            'UserPrincipalName', 'WhenChanged' , 'WhenCreated' |
             Select-Object -Property $adProperties
         }
         #endregion
