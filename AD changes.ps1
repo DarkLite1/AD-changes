@@ -318,13 +318,9 @@ Process {
             ) |
             Select-Object -Property $adProperties
         }
-        #endregion
 
-        #region Exit script when there are no AD users found
         if (-not $adUsers) {
-            $M = 'No AD user accounts found'
-            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-            Exit
+            throw 'No AD user accounts found'
         }
         #endregion
 
