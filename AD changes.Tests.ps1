@@ -176,10 +176,11 @@ Describe 'send an e-mail to the admin when' {
         Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
             $EntryType -eq 'Error'
         }
-    } -Tag test
+    }
 }
 Describe 'when all tests pass' {
     BeforeAll {
+        #region Create mocks
         Mock Get-ADDisplayNameHC {
             'manager chuck'
         } -ParameterFilter {
@@ -327,7 +328,8 @@ Describe 'when all tests pass' {
                 WhenCreated           = (Get-Date).AddYears(-30)
             }
         }
-
+        #endregion
+        
         $testJsonFile = @{
             AD       = @{
                 PropertyToMonitor = @('Office')
@@ -532,4 +534,4 @@ Describe 'when all tests pass' {
             }
         }
     } -Skip
-} #-Tag Test
+} -Tag Test
