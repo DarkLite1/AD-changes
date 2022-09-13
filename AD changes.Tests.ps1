@@ -44,6 +44,9 @@ Describe 'send an e-mail to the admin when' {
             (&$MailAdminParams) -and 
             ($Message -like '*Failed creating the log folder*')
         }
+        Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+            $EntryType -eq 'Error'
+        }
     }
     Context 'the ImportFile' {
         It 'is not found' {
@@ -148,6 +151,32 @@ Describe 'send an e-mail to the admin when' {
             }
         }
     }
+    It 'no AD user accounts were found' {
+        Mock Get-AdUser
+        
+        $testJsonFile = @{
+            AD       = @{
+                PropertyToMonitor = @('Office')
+                PropertyInReport  = @('SamAccountName', 'Office', 'Title')
+                OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+            }
+            SendMail = @{
+                When = 'Always'
+                To   = 'bob@contoso.com'
+            }
+        }
+        $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+
+        . $testScript @testParams
+
+        Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+            (&$MailAdminParams) -and 
+            ($Message -like '*No AD user accounts found*')
+        }
+        Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+            $EntryType -eq 'Error'
+        }
+    } -Tag test
 }
 Describe 'when all tests pass' {
     BeforeAll {
@@ -503,4 +532,4 @@ Describe 'when all tests pass' {
             }
         }
     } -Skip
-} -Tag Test
+} #-Tag Test
