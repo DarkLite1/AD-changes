@@ -14,11 +14,11 @@ BeforeAll {
         LogFolder  = 'TestDrive:/log'
     }
 
-    Mock Send-MailHC
-    Mock Write-EventLog
     Mock Get-ADDisplayNameHC
     Mock Get-ADUser
     Mock Get-ADTSProfileHC
+    Mock Send-MailHC
+    Mock Write-EventLog
 }
 
 Describe 'the mandatory parameters are' {
