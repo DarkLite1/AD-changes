@@ -161,3 +161,95 @@ Describe 'send an e-mail to the admin when' {
         }
     }
 }
+Describe 'when all tests pass' {
+    BeforeAll {
+        Mock Get-ADUser {
+            [PSCustomObject]@{
+                SamAccountName = 'cnorris'
+                DisplayName    = 'Chuck Norris'
+            }
+            [PSCustomObject]@{
+                SamAccountName = 'lswagger'
+                DisplayName    = 'Bob Lee Swagger'
+            }
+        }
+
+        $testJsonFile = @{
+            AD       = @{
+                PropertyToMonitor = @('Office')
+                PropertyInReport  = @('SamAccountName', 'Office', 'Title')
+                OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+            }
+            SendMail = @{
+                When = 'Always'
+                To   = 'bob@contoso.com'
+            }
+        }
+        $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+
+        .$testScript @testParams
+    }
+    Context 'export an Excel file with all AD user accounts' {
+        BeforeAll {
+            $testExportedExcelRows = @(
+                @{
+                    SamAccountName = 'cnorris'
+                    DisplayName    = 'Chuck Norris'
+                }
+                @{
+                    SamAccountName = 'lswagger'
+                    DisplayName    = 'Bob Lee Swagger'
+                }
+            )
+
+            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - State.xlsx'
+
+            $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'AllUsers'
+        }
+        It 'to the log folder' {
+            $testExcelLogFile | Should -Not -BeNullOrEmpty
+        }
+        It 'with the correct total rows' {
+            $actual | Should -HaveCount $testExportedExcelRows.Count
+        }
+        It 'with the correct data in the rows' {
+            foreach ($testRow in $testExportedExcelRows) {
+                $actualRow = $actual | Where-Object {
+                    $_.SamAccountName -eq $testRow.SamAccountName
+                }
+                $actualRow.SamAccountName | Should -Be $testRow.SamAccountName
+                $actualRow.DisplayName | Should -Be $testRow.DisplayName
+            }
+        }
+    } -Tag Test
+    Context 'send a mail to the user when SendMail.When is Always' {
+        BeforeAll {
+            $testMail = @{
+                To          = 'bob@contoso.com'
+                Bcc         = $ScriptAdmin
+                Priority    = 'Normal'
+                Subject     = '3 files found'
+                Message     = "*Found a total of <b>3 files</b>*$env:COMPUTERNAME*$testFolderPath*Filter*Files found**kiwi*3*Check the attachment for details*"
+                Attachments = '* - 0 - Log.xlsx'
+            }
+        }
+        It 'Send-MailHC has the correct arguments' {
+            $mailParams.To | Should -Be $testMail.To
+            $mailParams.Bcc | Should -Be $testMail.Bcc
+            $mailParams.Priority | Should -Be $testMail.Priority
+            $mailParams.Subject | Should -Be $testMail.Subject
+            $mailParams.Message | Should -BeLike $testMail.Message
+            $mailParams.Attachments | Should -BeLike $testMail.Attachments
+        }
+        It 'Send-MailHC is called' {
+            Should -Invoke Send-MailHC -Exactly 1 -Scope Describe -ParameterFilter {
+                ($To -eq $testMail.To) -and
+                ($Bcc -eq $testMail.Bcc) -and
+                ($Priority -eq $testMail.Priority) -and
+                ($Subject -eq $testMail.Subject) -and
+                ($Attachments -like $testMail.Attachments) -and
+                ($Message -like $testMail.Message)
+            }
+        }
+    } -Skip
+}

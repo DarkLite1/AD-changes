@@ -304,20 +304,35 @@ Process {
             $M = "Get user accounts in OU '$ou'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
-            Get-ADUser -OU $ou -Properties 'AccountExpirationDate', 
-            'CanonicalName', 'Co', 'Company', 'Department', 'Description', 
-            'DisplayName', 'DistinguishedName', 'EmailAddress', 'EmployeeID', 
-            'EmployeeType', 'Enabled', 'extensionAttribute8', 'Fax', 'GivenName', 'HomePhone', 'HomeDirectory', 'Info', 'IpPhone', 
-            'Surname', 'LastLogonDate', 'LockedOut', 'Manager', 'MobilePhone', 
-            'Name', 'Office', 'OfficePhone', 'Pager', 'PasswordExpired', 
-            'PasswordNeverExpires', 'SamAccountName', 'scriptPath', 'Title', 
-            'UserPrincipalName', 'WhenChanged' , 'WhenCreated' |
+            Get-ADUser -SearchBase $ou -Filter '*' -Properties @(
+                'AccountExpirationDate', 'CanonicalName', 'Co', 'Company', 
+                'Department', 'Description', 'DisplayName', 
+                'DistinguishedName', 'EmailAddress', 'EmployeeID', 
+                'EmployeeType', 'Enabled', 'extensionAttribute8', 'Fax', 
+                'GivenName', 'HomePhone', 'HomeDirectory', 'Info', 'IpPhone', 
+                'Surname', 'LastLogonDate', 'LockedOut', 'Manager', 
+                'MobilePhone', 'Name', 'Office', 'OfficePhone', 'Pager', 
+                'PasswordExpired', 'PasswordNeverExpires', 'SamAccountName', 
+                'scriptPath', 'Title', 'UserPrincipalName', 'WhenChanged' , 
+                'WhenCreated'
+            ) |
             Select-Object -Property $adProperties
         }
         #endregion
 
         #region Export users to Excel file
+        $excelParams = @{
+            Path          = "$logFile - State.xlsx"
+            WorksheetName = 'AllUsers'
+            TableName     = 'AllUsers'
+            AutoSize      = $true
+            FreezeTopRow  = $true
+        }
 
+        $M = "Export all AD users to Excel file '{0}'" -f $excelParams.Path
+        Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
+
+        $adUsers | Export-Excel @excelParams
         #endregion
     }
     Catch {
