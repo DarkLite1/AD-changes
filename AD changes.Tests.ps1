@@ -380,7 +380,7 @@ Describe 'when all tests pass' {
                     LockedOut                 = $testAdUser[0].LockedOut
                     Manager                   = 'manager chuck'
                     MobilePhone               = $testAdUser[0].MobilePhone
-                    Name                      = 'Chuck Norris'
+                    Name                      = $testAdUser[0].Name
                     Notes                     = 'best guy ever'
                     Office                    = $testAdUser[0].Office
                     OfficePhone               = $testAdUser[0].OfficePhone
@@ -421,7 +421,7 @@ Describe 'when all tests pass' {
                     LockedOut                 = $testAdUser[1].LockedOut
                     Manager                   = 'manager bob'
                     MobilePhone               = $testAdUser[1].MobilePhone
-                    Name                      = 'Bob Lee Swagger'
+                    Name                      = $testAdUser[1].Name
                     Notes                     = 'best sniper in the world'
                     Office                    = $testAdUser[1].Office
                     OfficePhone               = $testAdUser[1].OfficePhone
