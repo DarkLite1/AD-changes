@@ -352,7 +352,7 @@ Process {
 
         #region Exit script when there is no previously exported Excel file
         if (-not $lastExcelFile) {
-            $M = 'No comparison possible because there is no previously exported Excel file yet.'
+            $M = 'No comparison possible because there is no previously exported Excel file with AD user accounts yet. The next run will not have this issue because a snapshot of the current AD users has just been created and exported to Excel. This file will then be used for comparison on the next run.'
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             Exit
         }
