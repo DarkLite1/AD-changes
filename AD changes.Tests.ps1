@@ -249,8 +249,9 @@ Describe 'when all tests pass' {
         } -ParameterFilter {
             $Name -eq 'OU=Tennessee,OU=USA,DC=contoso,DC=net'
         }
+        #endregion
 
-        Mock Get-ADUser {
+        $testAdUser = @(
             [PSCustomObject]@{
                 AccountExpirationDate = (Get-Date).AddYears(1)
                 CanonicalName         = 'OU=Texas,OU=USA,DC=contoso,DC=net'
@@ -327,9 +328,11 @@ Describe 'when all tests pass' {
                 WhenChanged           = (Get-Date).AddDays(-7)
                 WhenCreated           = (Get-Date).AddYears(-30)
             }
+        )
+        Mock Get-ADUser {
+            $testAdUser
         }
-        #endregion
-        
+
         $testJsonFile = @{
             AD       = @{
                 PropertyToMonitor = @('Office')
@@ -356,86 +359,86 @@ Describe 'when all tests pass' {
         BeforeAll {
             $testExportedExcelRows = @(
                 @{
-                    AccountExpirationDate     = (Get-Date).AddYears(1)
-                    Country                   = 'USA'
-                    Company                   = 'US Government'
-                    Department                = 'Texas rangers'
-                    Description               = 'Ranger'
-                    DisplayName               = 'Chuck Norris'
-                    EmailAddress              = 'gmail@chuck.norris'
-                    EmployeeID                = '1'
-                    EmployeeType              = 'Special'
-                    Enabled                   = $true
-                    Fax                       = '2'
-                    FirstName                 = 'Chuck'
-                    HeidelbergCementBillingID = '3'
-                    HomePhone                 = '4'
-                    HomeDirectory             = 'c:\chuck'
-                    IpPhone                   = '5'
-                    LastName                  = 'Norris'
-                    LastLogonDate             = (Get-Date)
-                    LockedOut                 = $false
+                    AccountExpirationDate     = $testAdUser[0].AccountExpirationDate
+                    Country                   = $testAdUser[0].Co
+                    Company                   = $testAdUser[0].Company
+                    Department                = $testAdUser[0].Department
+                    Description               = $testAdUser[0].Description
+                    DisplayName               = $testAdUser[0].DisplayName
+                    EmailAddress              = $testAdUser[0].EmailAddress
+                    EmployeeID                = $testAdUser[0].EmployeeID
+                    EmployeeType              = $testAdUser[0].EmployeeType
+                    Enabled                   = $testAdUser[0].Enabled
+                    Fax                       = $testAdUser[0].Fax
+                    FirstName                 = $testAdUser[0].GivenName
+                    HeidelbergCementBillingID = $testAdUser[0].extensionAttribute8
+                    HomePhone                 = $testAdUser[0].HomePhone
+                    HomeDirectory             = $testAdUser[0].HomeDirectory
+                    IpPhone                   = $testAdUser[0].IpPhone
+                    LastName                  = $testAdUser[0].Surname
+                    LastLogonDate             = $testAdUser[0].LastLogonDate
+                    LockedOut                 = $testAdUser[0].LockedOut
                     Manager                   = 'manager chuck'
-                    MobilePhone               = '6'
+                    MobilePhone               = $testAdUser[0].MobilePhone
                     Name                      = 'Chuck Norris'
                     Notes                     = 'best guy ever'
-                    Office                    = 'Texas'
-                    OfficePhone               = '7'
+                    Office                    = $testAdUser[0].Office
+                    OfficePhone               = $testAdUser[0].OfficePhone
                     OU                        = 'OU chuck'
-                    Pager                     = '9'
-                    PasswordExpired           = $false
-                    PasswordNeverExpires      = $true
-                    SamAccountName            = 'cnorris'
-                    LogonScript               = 'c:\cnorris\script.ps1'
-                    Title                     = 'Texas lead ranger'
+                    Pager                     = $testAdUser[0].Pager
+                    PasswordExpired           = $testAdUser[0].PasswordExpired
+                    PasswordNeverExpires      = $testAdUser[0].PasswordNeverExpires
+                    SamAccountName            = $testAdUser[0].SamAccountName
+                    LogonScript               = $testAdUser[0].scriptPath
+                    Title                     = $testAdUser[0].Title
                     TSAllowLogon              = 'TS AllowLogon chuck'
                     TSHomeDirectory           = 'TS HomeDirectory chuck'
                     TSHomeDrive               = 'TS HomeDrive chuck'
                     TSUserProfile             = 'TS UserProfile chuck'
-                    UserPrincipalName         = 'norris@world'
-                    WhenChanged               = (Get-Date).AddDays(-5)
-                    WhenCreated               = (Get-Date).AddYears(-3)
+                    UserPrincipalName         = $testAdUser[0].UserPrincipalName
+                    WhenChanged               = $testAdUser[0].WhenChanged
+                    WhenCreated               = $testAdUser[0].WhenCreated
                 }
                 @{
-                    AccountExpirationDate     = (Get-Date).AddYears(2)
-                    Country                   = 'America'
-                    Company                   = 'Retired'
-                    Department                = 'US Army snipers'
-                    Description               = 'Sniper'
-                    DisplayName               = 'Bob Lee Swagger'
-                    EmailAddress              = 'bl@tenessee.com'
-                    EmployeeID                = '9'
-                    EmployeeType              = 'Sniper'
-                    Enabled                   = $true
-                    Fax                       = '10'
-                    FirstName                 = 'Bob Lee'
-                    HeidelbergCementBillingID = '11'
-                    HomePhone                 = '12'
-                    HomeDirectory             = 'c:\swagger'
-                    IpPhone                   = '13'
-                    LastName                  = 'Swagger'
-                    LastLogonDate             = (Get-Date)
-                    LockedOut                 = $false
+                    AccountExpirationDate     = $testAdUser[1].AccountExpirationDate
+                    Country                   = $testAdUser[1].Co
+                    Company                   = $testAdUser[1].Company
+                    Department                = $testAdUser[1].Department
+                    Description               = $testAdUser[1].Description
+                    DisplayName               = $testAdUser[1].DisplayName
+                    EmailAddress              = $testAdUser[1].EmailAddress
+                    EmployeeID                = $testAdUser[1].EmployeeID
+                    EmployeeType              = $testAdUser[1].EmployeeType
+                    Enabled                   = $testAdUser[1].Enabled
+                    Fax                       = $testAdUser[1].Fax
+                    FirstName                 = $testAdUser[1].GivenName
+                    HeidelbergCementBillingID = $testAdUser[1].extensionAttribute8
+                    HomePhone                 = $testAdUser[1].HomePhone
+                    HomeDirectory             = $testAdUser[1].HomeDirectory
+                    IpPhone                   = $testAdUser[1].IpPhone
+                    LastName                  = $testAdUser[1].Surname
+                    LastLogonDate             = $testAdUser[1].LastLogonDate
+                    LockedOut                 = $testAdUser[1].LockedOut
                     Manager                   = 'manager bob'
-                    MobilePhone               = '14'
+                    MobilePhone               = $testAdUser[1].MobilePhone
                     Name                      = 'Bob Lee Swagger'
                     Notes                     = 'best sniper in the world'
-                    Office                    = 'Tennessee'
-                    OfficePhone               = '15'
+                    Office                    = $testAdUser[1].Office
+                    OfficePhone               = $testAdUser[1].OfficePhone
                     OU                        = 'OU bob'
-                    Pager                     = '16'
-                    PasswordExpired           = $false
-                    PasswordNeverExpires      = $true
-                    SamAccountName            = 'lswagger'
-                    LogonScript               = 'c:\swagger\script.ps1'
-                    Title                     = 'Corporal'
+                    Pager                     = $testAdUser[1].Pager
+                    PasswordExpired           = $testAdUser[1].PasswordExpired
+                    PasswordNeverExpires      = $testAdUser[1].PasswordNeverExpires
+                    SamAccountName            = $testAdUser[1].SamAccountName
+                    LogonScript               = $testAdUser[1].scriptPath
+                    Title                     = $testAdUser[1].Title
                     TSAllowLogon              = 'TS AllowLogon bob'
                     TSHomeDirectory           = 'TS HomeDirectory bob'
                     TSHomeDrive               = 'TS HomeDrive bob'
                     TSUserProfile             = 'TS UserProfile bob'
-                    UserPrincipalName         = 'swagger@world'
-                    WhenChanged               = (Get-Date).AddDays(-7)
-                    WhenCreated               = (Get-Date).AddYears(-30)
+                    UserPrincipalName         = $testAdUser[1].UserPrincipalName
+                    WhenChanged               = $testAdUser[1].WhenChanged
+                    WhenCreated               = $testAdUser[1].WhenCreated
                 }
             )
 
