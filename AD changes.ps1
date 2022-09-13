@@ -300,7 +300,7 @@ Begin {
 Process {
     Try {
         #region Get AD users
-        [array]$adUsers = foreach ($ou in $adOU) {
+        $adUsers = foreach ($ou in $adOU) {
             $M = "Get user accounts in OU '$ou'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
