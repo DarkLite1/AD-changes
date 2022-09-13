@@ -151,14 +151,151 @@ Describe 'send an e-mail to the admin when' {
 }
 Describe 'when all tests pass' {
     BeforeAll {
+        Mock Get-ADDisplayNameHC {
+            'manager chuck'
+        } -ParameterFilter {
+            $Name -eq 'President'
+        }
+        Mock Get-ADDisplayNameHC {
+            'manager bob'
+        } -ParameterFilter {
+            $Name -eq 'US President'
+        }
+        Mock Get-ADTsProfileHC {
+            "TS AllowLogon chuck"
+        } -ParameterFilter {
+            ($DistinguishedName -eq 'dis chuck') -and
+            ($Property -eq 'AllowLogon')
+        }
+        Mock Get-ADTsProfileHC {
+            "TS AllowLogon bob"
+        } -ParameterFilter {
+            ($DistinguishedName -eq 'dis bob') -and
+            ($Property -eq 'AllowLogon')
+        }
+        Mock Get-ADTsProfileHC {
+            "TS HomeDirectory chuck"
+        } -ParameterFilter {
+            ($DistinguishedName -eq 'dis chuck') -and
+            ($Property -eq 'HomeDirectory')
+        }
+        Mock Get-ADTsProfileHC {
+            "TS HomeDirectory bob"
+        } -ParameterFilter {
+            ($DistinguishedName -eq 'dis bob') -and
+            ($Property -eq 'HomeDirectory')
+        }
+        Mock Get-ADTsProfileHC {
+            "TS HomeDrive chuck"
+        } -ParameterFilter {
+            ($DistinguishedName -eq 'dis chuck') -and
+            ($Property -eq 'HomeDrive')
+        }
+        Mock Get-ADTsProfileHC {
+            "TS HomeDrive bob"
+        } -ParameterFilter {
+            ($DistinguishedName -eq 'dis bob') -and
+            ($Property -eq 'HomeDrive')
+        }
+        Mock Get-ADTsProfileHC {
+            "TS UserProfile chuck"
+        } -ParameterFilter {
+            ($DistinguishedName -eq 'dis chuck') -and
+            ($Property -eq 'UserProfile')
+        }
+        Mock Get-ADTsProfileHC {
+            "TS UserProfile bob"
+        } -ParameterFilter {
+            ($DistinguishedName -eq 'dis bob') -and
+            ($Property -eq 'UserProfile')
+        }
+        Mock ConvertTo-OuNameHC {
+            'OU chuck'
+        } -ParameterFilter {
+            $Name -eq 'OU=Texas,OU=USA,DC=contoso,DC=net'
+        }
+        Mock ConvertTo-OuNameHC {
+            'OU bob'
+        } -ParameterFilter {
+            $Name -eq 'OU=Tennessee,OU=USA,DC=contoso,DC=net'
+        }
+
         Mock Get-ADUser {
             [PSCustomObject]@{
-                SamAccountName = 'cnorris'
-                DisplayName    = 'Chuck Norris'
+                AccountExpirationDate = (Get-Date).AddYears(1)
+                CanonicalName         = 'OU=Texas,OU=USA,DC=contoso,DC=net'
+                Co                    = 'USA'
+                Company               = 'US Government'
+                Department            = 'Texas rangers'
+                Description           = 'Ranger'
+                DisplayName           = 'Chuck Norris'
+                DistinguishedName     = 'dis chuck'
+                EmailAddress          = 'gmail@chuck.norris'
+                EmployeeID            = '1'
+                EmployeeType          = 'Special'
+                Enabled               = $true
+                ExtensionAttribute8   = '3'
+                Fax                   = '2'
+                GivenName             = 'Chuck'
+                HomePhone             = '4'
+                HomeDirectory         = 'c:\chuck'
+                Info                  = "best`nguy`never"
+                IpPhone               = '5'
+                Surname               = 'Norris'
+                LastLogonDate         = (Get-Date)
+                LockedOut             = $false
+                Manager               = 'President'
+                MobilePhone           = '6'
+                Name                  = 'Chuck Norris'
+                Office                = 'Texas'
+                OfficePhone           = '7'
+                Pager                 = '9'
+                PasswordExpired       = $false
+                PasswordNeverExpires  = $true
+                SamAccountName        = 'cnorris'
+                ScriptPath            = 'c:\cnorris\script.ps1'
+                Title                 = 'Texas lead ranger'
+                UserPrincipalName     = 'norris@world'
+                WhenChanged           = (Get-Date).AddDays(-5)
+                WhenCreated           = (Get-Date).AddYears(-3)
             }
             [PSCustomObject]@{
-                SamAccountName = 'lswagger'
-                DisplayName    = 'Bob Lee Swagger'
+                AccountExpirationDate = (Get-Date).AddYears(2)
+                CanonicalName         = 'OU=Tennessee,OU=USA,DC=contoso,DC=net'
+                Co                    = 'America'
+                Company               = 'Retired'
+                Department            = 'US Army snipers'
+                Description           = 'Sniper'
+                DisplayName           = 'Bob Lee Swagger'
+                DistinguishedName     = 'dis bob'
+                EmailAddress          = 'bl@tenessee.com'
+                EmployeeID            = '9'
+                EmployeeType          = 'Sniper'
+                Enabled               = $true
+                ExtensionAttribute8   = '11'
+                Fax                   = '10'
+                GivenName             = 'Bob Lee'
+                HomePhone             = '12'
+                HomeDirectory         = 'c:\swagger'
+                Info                  = "best`nsniper`nin`nthe`nworld"
+                IpPhone               = '13'
+                Surname               = 'Swagger'
+                LastLogonDate         = (Get-Date)
+                LockedOut             = $false
+                Manager               = 'US President'
+                MobilePhone           = '14'
+                Name                  = 'Bob Lee Swagger'
+                Office                = 'Tennessee'
+                OfficePhone           = '15'
+                Pager                 = '16'
+                PasswordExpired       = $false
+                PasswordNeverExpires  = $true
+                SamAccountName        = 'lswagger'
+                ScriptPath            = 'c:\swagger\script.ps1'
+                Title                 = 'Corporal'
+                UserPrincipalName     = 'swagger@world'
+                WhenChanged           = (Get-Date).AddDays(-7)
+                WhenCreated           = (Get-Date).AddYears(-30)
             }
         }
 
@@ -177,16 +314,97 @@ Describe 'when all tests pass' {
 
         .$testScript @testParams
     }
+    Context 'Get-AdUser' {
+        It 'is called with the correct arguments' {
+            Should -Invoke Get-AdUser -Scope Describe -Times 1 -Exactly -ParameterFilter {
+                ($SearchBase -eq $testJsonFile.AD.OU)
+            }
+        }
+    }
     Context 'export an Excel file with all AD user accounts' {
         BeforeAll {
             $testExportedExcelRows = @(
                 @{
-                    SamAccountName = 'cnorris'
-                    DisplayName    = 'Chuck Norris'
+                    AccountExpirationDate     = (Get-Date).AddYears(1)
+                    Country                   = 'USA'
+                    Company                   = 'US Government'
+                    Department                = 'Texas rangers'
+                    Description               = 'Ranger'
+                    DisplayName               = 'Chuck Norris'
+                    EmailAddress              = 'gmail@chuck.norris'
+                    EmployeeID                = '1'
+                    EmployeeType              = 'Special'
+                    Enabled                   = $true
+                    Fax                       = '2'
+                    FirstName                 = 'Chuck'
+                    HeidelbergCementBillingID = '3'
+                    HomePhone                 = '4'
+                    HomeDirectory             = 'c:\chuck'
+                    IpPhone                   = '5'
+                    LastName                  = 'Norris'
+                    LastLogonDate             = (Get-Date)
+                    LockedOut                 = $false
+                    Manager                   = 'manager chuck'
+                    MobilePhone               = '6'
+                    Name                      = 'Chuck Norris'
+                    Notes                     = 'best guy ever'
+                    Office                    = 'Texas'
+                    OfficePhone               = '7'
+                    OU                        = 'OU chuck'
+                    Pager                     = '9'
+                    PasswordExpired           = $false
+                    PasswordNeverExpires      = $true
+                    SamAccountName            = 'cnorris'
+                    LogonScript               = 'c:\cnorris\script.ps1'
+                    Title                     = 'Texas lead ranger'
+                    TSAllowLogon              = 'TS AllowLogon chuck'
+                    TSHomeDirectory           = 'TS HomeDirectory chuck'
+                    TSHomeDrive               = 'TS HomeDrive chuck'
+                    TSUserProfile             = 'TS UserProfile chuck'
+                    UserPrincipalName         = 'norris@world'
+                    WhenChanged               = (Get-Date).AddDays(-5)
+                    WhenCreated               = (Get-Date).AddYears(-3)
                 }
                 @{
-                    SamAccountName = 'lswagger'
-                    DisplayName    = 'Bob Lee Swagger'
+                    AccountExpirationDate     = (Get-Date).AddYears(2)
+                    Country                   = 'America'
+                    Company                   = 'Retired'
+                    Department                = 'US Army snipers'
+                    Description               = 'Sniper'
+                    DisplayName               = 'Bob Lee Swagger'
+                    EmailAddress              = 'bl@tenessee.com'
+                    EmployeeID                = '9'
+                    EmployeeType              = 'Sniper'
+                    Enabled                   = $true
+                    Fax                       = '10'
+                    FirstName                 = 'Bob Lee'
+                    HeidelbergCementBillingID = '11'
+                    HomePhone                 = '12'
+                    HomeDirectory             = 'c:\swagger'
+                    IpPhone                   = '13'
+                    LastName                  = 'Swagger'
+                    LastLogonDate             = (Get-Date)
+                    LockedOut                 = $false
+                    Manager                   = 'manager bob'
+                    MobilePhone               = '14'
+                    Name                      = 'Bob Lee Swagger'
+                    Notes                     = 'best sniper in the world'
+                    Office                    = 'Tennessee'
+                    OfficePhone               = '15'
+                    OU                        = 'OU bob'
+                    Pager                     = '16'
+                    PasswordExpired           = $false
+                    PasswordNeverExpires      = $true
+                    SamAccountName            = 'lswagger'
+                    LogonScript               = 'c:\swagger\script.ps1'
+                    Title                     = 'Corporal'
+                    TSAllowLogon              = 'TS AllowLogon bob'
+                    TSHomeDirectory           = 'TS HomeDirectory bob'
+                    TSHomeDrive               = 'TS HomeDrive bob'
+                    TSUserProfile             = 'TS UserProfile bob'
+                    UserPrincipalName         = 'swagger@world'
+                    WhenChanged               = (Get-Date).AddDays(-7)
+                    WhenCreated               = (Get-Date).AddYears(-30)
                 }
             )
 
@@ -205,11 +423,56 @@ Describe 'when all tests pass' {
                 $actualRow = $actual | Where-Object {
                     $_.SamAccountName -eq $testRow.SamAccountName
                 }
-                $actualRow.SamAccountName | Should -Be $testRow.SamAccountName
+                $actualRow.AccountExpirationDate.ToString('yyyyMMdd HHmm') | 
+                Should -Be $testRow.AccountExpirationDate.ToString('yyyyMMdd HHmm')
                 $actualRow.DisplayName | Should -Be $testRow.DisplayName
+                $actualRow.Country | Should -Be $testRow.Country
+                $actualRow.Company | Should -Be $testRow.Company
+                $actualRow.Department | Should -Be $testRow.Department
+                $actualRow.Description | Should -Be $testRow.Description
+                $actualRow.DisplayName | Should -Be $testRow.DisplayName
+                $actualRow.EmailAddress | Should -Be $testRow.EmailAddress
+                $actualRow.EmployeeID | Should -Be $testRow.EmployeeID
+                $actualRow.EmployeeType | Should -Be $testRow.EmployeeType
+                $actualRow.Enabled | Should -Be $testRow.Enabled
+                $actualRow.Fax | Should -Be $testRow.Fax
+                $actualRow.FirstName | Should -Be $testRow.FirstName
+                $actualRow.HeidelbergCementBillingID | 
+                Should -Be $testRow.HeidelbergCementBillingID
+                $actualRow.HomePhone | Should -Be $testRow.HomePhone
+                $actualRow.HomeDirectory | Should -Be $testRow.HomeDirectory
+                $actualRow.IpPhone | Should -Be $testRow.IpPhone
+                $actualRow.LastName | Should -Be $testRow.LastName
+                $actualRow.LogonScript | Should -Be $testRow.LogonScript
+                $actualRow.LastLogonDate.ToString('yyyyMMdd HHmm') | 
+                Should -Be $testRow.LastLogonDate.ToString('yyyyMMdd HHmm')
+                $actualRow.LockedOut | Should -Be $testRow.LockedOut
+                $actualRow.Manager | Should -Be $testRow.Manager
+                $actualRow.MobilePhone | Should -Be $testRow.MobilePhone
+                $actualRow.Name | Should -Be $testRow.Name
+                $actualRow.Notes | Should -Be $testRow.Notes
+                $actualRow.Office | Should -Be $testRow.Office
+                $actualRow.OfficePhone | Should -Be $testRow.OfficePhone
+                $actualRow.OU | Should -Be $testRow.OU
+                $actualRow.Pager | Should -Be $testRow.Pager
+                $actualRow.PasswordExpired | Should -Be $testRow.PasswordExpired
+                $actualRow.PasswordNeverExpires | 
+                Should -Be $testRow.PasswordNeverExpires
+                $actualRow.SamAccountName | Should -Be $testRow.SamAccountName
+                $actualRow.Title | Should -Be $testRow.Title
+                $actualRow.TSAllowLogon | Should -Be $testRow.TSAllowLogon
+                $actualRow.TSHomeDirectory | Should -Be $testRow.TSHomeDirectory
+                $actualRow.TSHomeDrive | Should -Be $testRow.TSHomeDrive
+                $actualRow.TSUserProfile | Should -Be $testRow.TSUserProfile
+                $actualRow.UserPrincipalName | 
+                Should -Be $testRow.UserPrincipalName
+                $actualRow.WhenChanged.ToString('yyyyMMdd HHmm') | 
+                Should -Be $testRow.WhenChanged.ToString('yyyyMMdd HHmm')
+                $actualRow.WhenCreated.ToString('yyyyMMdd HHmm') | 
+                Should -Be $testRow.WhenCreated.ToString('yyyyMMdd HHmm')
             }
         }
-    } -Tag Test
+    }
     Context 'send a mail to the user when SendMail.When is Always' {
         BeforeAll {
             $testMail = @{
@@ -240,4 +503,4 @@ Describe 'when all tests pass' {
             }
         }
     } -Skip
-}
+} -Tag Test

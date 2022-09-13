@@ -308,12 +308,12 @@ Process {
                 'AccountExpirationDate', 'CanonicalName', 'Co', 'Company', 
                 'Department', 'Description', 'DisplayName', 
                 'DistinguishedName', 'EmailAddress', 'EmployeeID', 
-                'EmployeeType', 'Enabled', 'extensionAttribute8', 'Fax', 
+                'EmployeeType', 'Enabled', 'ExtensionAttribute8', 'Fax', 
                 'GivenName', 'HomePhone', 'HomeDirectory', 'Info', 'IpPhone', 
                 'Surname', 'LastLogonDate', 'LockedOut', 'Manager', 
                 'MobilePhone', 'Name', 'Office', 'OfficePhone', 'Pager', 
                 'PasswordExpired', 'PasswordNeverExpires', 'SamAccountName', 
-                'scriptPath', 'Title', 'UserPrincipalName', 'WhenChanged' , 
+                'ScriptPath', 'Title', 'UserPrincipalName', 'WhenChanged' , 
                 'WhenCreated'
             ) |
             Select-Object -Property $adProperties
