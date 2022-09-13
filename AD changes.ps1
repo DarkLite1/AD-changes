@@ -296,7 +296,6 @@ Begin {
         Write-EventLog @EventEndParams; Exit 1
     }
 }
-
 Process {
     Try {
         #region Get AD users
