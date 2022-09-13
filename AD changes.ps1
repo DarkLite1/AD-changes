@@ -53,7 +53,7 @@ Param (
 
 Begin {
     Try {
-        Get-ScriptRuntimeHC -Start
+        $now = Get-ScriptRuntimeHC -Start
         Import-EventLogParamsHC -Source $ScriptName
         Write-EventLog @EventStartParams
 
@@ -320,7 +320,15 @@ Process {
         }
         #endregion
 
-        #region Export users to Excel file
+        #region Exit script when there are no AD users found
+        if (-not $adUsers) {
+            $M = 'No AD user accounts found'
+            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+            Exit
+        }
+        #endregion
+
+        #region Export all AD users to Excel file
         $excelParams = @{
             Path          = "$logFile - State.xlsx"
             WorksheetName = 'AllUsers'
@@ -333,6 +341,25 @@ Process {
         Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
         $adUsers | Export-Excel @excelParams
+        #endregion
+
+        #region Get previously exported Excel file
+        $params = @{
+            LiteralPath = $logParams.LogFolder
+            Filter      = '* - State.xlsx'
+            File        = $true
+        }
+        $lastExcelFile = Get-ChildItem @params | Where-Object {
+            $_.CreationTime.Date -ge $now.Date
+        } | Sort-Object 'CreationTime' | Select-Object -Last 1
+        #endregion
+
+        #region Exit script when there is no previously exported Excel file
+        if (-not $lastExcelFile) {
+            $M = 'No previously exported Excel file'
+            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+            Exit
+        }
         #endregion
     }
     Catch {
