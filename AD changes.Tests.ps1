@@ -7,18 +7,6 @@ BeforeAll {
         Encoding = 'utf8'
     }
 
-    $testInputFile = @{
-        AD       = @{
-            PropertyToMonitor = @('Office')
-            PropertyInReport  = @('SamAccountName', 'Office', 'Title')
-            OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
-        }
-        SendMail = @{
-            When = 'Always'
-            To   = 'bob@contoso.com'
-        }
-    }
-
     $testScript = $PSCommandPath.Replace('.Tests.ps1', '.ps1')
     $testParams = @{
         ScriptName = 'Test (Brecht)'
