@@ -352,7 +352,7 @@ Process {
 
         #region Exit script when there is no previously exported Excel file
         if (-not $lastExcelFile) {
-            $M = 'No previously exported Excel file'
+            $M = 'No comparison possible because there is no previously exported Excel file yet.'
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             Exit
         }
