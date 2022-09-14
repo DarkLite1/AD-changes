@@ -178,7 +178,7 @@ Describe 'send an e-mail to the admin when' {
         }
     }
 }
-Describe 'when all tests pass' {
+Describe 'when the script runs for the first time' {
     BeforeAll {
         #region Create mocks
         Mock Get-ADDisplayNameHC {
@@ -507,34 +507,4 @@ Describe 'when all tests pass' {
             }
         }
     }
-    Context 'send a mail to the user when SendMail.When is Always' {
-        BeforeAll {
-            $testMail = @{
-                To          = 'bob@contoso.com'
-                Bcc         = $ScriptAdmin
-                Priority    = 'Normal'
-                Subject     = '3 files found'
-                Message     = "*Found a total of <b>3 files</b>*$env:COMPUTERNAME*$testFolderPath*Filter*Files found**kiwi*3*Check the attachment for details*"
-                Attachments = '* - 0 - Log.xlsx'
-            }
-        }
-        It 'Send-MailHC has the correct arguments' {
-            $mailParams.To | Should -Be $testMail.To
-            $mailParams.Bcc | Should -Be $testMail.Bcc
-            $mailParams.Priority | Should -Be $testMail.Priority
-            $mailParams.Subject | Should -Be $testMail.Subject
-            $mailParams.Message | Should -BeLike $testMail.Message
-            $mailParams.Attachments | Should -BeLike $testMail.Attachments
-        }
-        It 'Send-MailHC is called' {
-            Should -Invoke Send-MailHC -Exactly 1 -Scope Describe -ParameterFilter {
-                ($To -eq $testMail.To) -and
-                ($Bcc -eq $testMail.Bcc) -and
-                ($Priority -eq $testMail.Priority) -and
-                ($Subject -eq $testMail.Subject) -and
-                ($Attachments -like $testMail.Attachments) -and
-                ($Message -like $testMail.Message)
-            }
-        }
-    } -Skip
-} -Tag Test
+}
