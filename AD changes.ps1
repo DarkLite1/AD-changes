@@ -318,7 +318,8 @@ Process {
             Select-Object -Property $adProperties
         }
 
-        $M = 'Found {0} user accounts in AD' -f $currentAdUsers.Count
+        $M = 'Found {0} user account{1} in AD' -f $currentAdUsers.Count,
+        $(if ($currentAdUsers.Count -ne 1) { 's' })
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
         if (-not $currentAdUsers) {
