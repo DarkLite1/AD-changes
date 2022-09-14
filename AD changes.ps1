@@ -492,7 +492,7 @@ Process {
                 $currentAdUser | 
                 Select-Object -Property *, @{
                     Name       = 'Status'
-                    Expression = { 'UPDATED' }
+                    Expression = { 'AFTER_UPDATE' }
                 }, @{
                     Name       = 'Updated'
                     Expression = { $propertiesUpdated }

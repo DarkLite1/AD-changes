@@ -1485,7 +1485,7 @@ Describe 'when the script runs after a snapshot was created' {
             BeforeAll {
                 $testExportedExcelRows = @(
                     @{
-                        Status                    = 'UPDATED'
+                        Status                    = 'AFTER_UPDATE'
                         Updated                   = 'Description, Title'
                         AccountExpirationDate     = $testAdUser[0].AccountExpirationDate
                         Country                   = $testAdUser[0].Co
