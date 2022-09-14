@@ -298,8 +298,8 @@ Begin {
 }
 Process {
     Try {
-        #region Get AD users
-        $adUsers = foreach ($ou in $adOU) {
+        #region Get current AD users
+        $currentAdUsers = foreach ($ou in $adOU) {
             $M = "Get user accounts in OU '$ou'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
@@ -318,7 +318,7 @@ Process {
             Select-Object -Property $adProperties
         }
 
-        if (-not $adUsers) {
+        if (-not $currentAdUsers) {
             throw 'No AD user accounts found'
         }
         #endregion
@@ -335,10 +335,10 @@ Process {
         $M = "Export all AD users to Excel file '{0}'" -f $excelParams.Path
         Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
-        $adUsers | Export-Excel @excelParams
+        $currentAdUsers | Export-Excel @excelParams
         #endregion
 
-        #region Get previously exported Excel file
+        #region Get previously exported AD users
         $params = @{
             LiteralPath = $logParams.LogFolder
             Filter      = '* - State.xlsx'
@@ -347,14 +347,19 @@ Process {
         $lastExcelFile = Get-ChildItem @params | Where-Object {
             $_.CreationTime.Date -ge $now.Date
         } | Sort-Object 'CreationTime' | Select-Object -Last 1
-        #endregion
 
-        #region Exit script when there is no previously exported Excel file
         if (-not $lastExcelFile) {
             $M = 'No comparison possible because there is no previously exported Excel file with AD user accounts yet. The next run will not have this issue because a snapshot of the current AD users has just been created and exported to Excel. This file will then be used for comparison on the next run.'
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             Exit
         }
+        
+        $params = @{
+            Path          = $lastExcelFile.FullName
+            WorksheetName = $excelParams.WorksheetName
+            ErrorAction   = 'Stop'
+        }
+        $previousAdUsers = Import-Excel @params
         #endregion
     }
     Catch {
