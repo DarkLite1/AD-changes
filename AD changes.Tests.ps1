@@ -1639,7 +1639,7 @@ Describe 'when the script runs after a snapshot was created' {
                 }
             }
         }
-    } -Tag test
+    }
     
     Context 'send a mail to the user when SendMail.When is Always' {
         BeforeAll {
@@ -1672,3 +1672,136 @@ Describe 'when the script runs after a snapshot was created' {
         }
     } -Skip
 }
+Describe 'export only the requested AD properties' {
+    BeforeAll {
+        $testAdUser = @(
+            [PSCustomObject]@{
+                AccountExpirationDate = (Get-Date).AddYears(1)
+                CanonicalName         = 'OU=Texas,OU=USA,DC=contoso,DC=net'
+                Co                    = 'USA'
+                Company               = 'US Government'
+                Department            = 'Texas rangers'
+                Description           = 'Ranger'
+                DisplayName           = 'Chuck Norris'
+                DistinguishedName     = 'dis chuck'
+                EmailAddress          = 'gmail@chuck.norris'
+                EmployeeID            = '1'
+                EmployeeType          = 'Special'
+                Enabled               = $true
+                ExtensionAttribute8   = '3'
+                Fax                   = '2'
+                GivenName             = 'Chuck'
+                HomePhone             = '4'
+                HomeDirectory         = 'c:\chuck'
+                Info                  = "best`nguy`never"
+                IpPhone               = '5'
+                Surname               = 'Norris'
+                LastLogonDate         = (Get-Date)
+                LockedOut             = $false
+                Manager               = 'President'
+                MobilePhone           = '6'
+                Name                  = 'Chuck Norris'
+                Office                = 'Texas'
+                OfficePhone           = '7'
+                Pager                 = '9'
+                PasswordExpired       = $false
+                PasswordNeverExpires  = $true
+                SamAccountName        = 'cnorris'
+                ScriptPath            = 'c:\cnorris\script.ps1'
+                Title                 = 'Texas lead ranger'
+                UserPrincipalName     = 'norris@world'
+                WhenChanged           = (Get-Date).AddDays(-5)
+                WhenCreated           = (Get-Date).AddYears(-3)
+            }
+        )
+        
+        Mock Get-ADUser {
+            $testAdUser
+        }
+
+        $testJsonFile = @{
+            AD       = @{
+                PropertyToMonitor = @('Description', 'Title')
+                PropertyInReport  = @('Office')
+                OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+            }
+            SendMail = @{
+                When = 'Always'
+                To   = 'bob@contoso.com'
+            }
+        }
+        $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+
+        .$testScript @testParams
+    }
+    Context 'to the Excel file with the differences' {
+        BeforeAll {
+            $testOriginalValue = @{
+                Description = $testAdUser[0].Description
+                Title       = $testAdUser[0].Title
+            }
+
+            $testAdUser[0].Description = 'changed description'
+            $testAdUser[0].Title = 'changed title'
+
+            Mock Get-ADUser {
+                $testAdUser
+            }
+
+            .$testScript @testParams
+
+            $testExportedExcelRows = @(
+                @{
+                    Status         = 'AFTER_UPDATE'
+                    UpdatedFields  = 'Description, Title'
+                    Description    = $testAdUser[0].Description
+                    Office         = $testAdUser[0].Office
+                    SamAccountName = $testAdUser[0].SamAccountName
+                    Title          = $testAdUser[0].Title
+                }
+                @{
+                    Status         = 'BEFORE_UPDATE'
+                    UpdatedFields  = 'Description, Title'
+                    Description    = $testOriginalValue.Description
+                    Office         = $testAdUser[0].Office
+                    SamAccountName = $testAdUser[0].SamAccountName
+                    Title          = $testOriginalValue.Title
+                }
+            )
+
+            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences{*}.xlsx'
+
+            $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'Differences'
+        }
+        It 'to the log folder' {
+            $testExcelLogFile | Should -Not -BeNullOrEmpty
+        }
+        It 'with the correct total rows' {
+            $actual | Should -HaveCount $testExportedExcelRows.Count
+        }
+        It 'with the correct data in the rows' {
+            foreach ($testRow in $testExportedExcelRows) {
+                $actualRow = $actual | Where-Object {
+                    $_.Status -eq $testRow.Status
+                }
+                $actualRow.SamAccountName | 
+                Should -Be $testRow.SamAccountName
+                $actualRow.Description | Should -Be $testRow.Description
+                $actualRow.Office | Should -Be $testRow.Office
+                $actualRow.Title | Should -Be $testRow.Title
+                $actualRow.UpdatedFields | Should -Be $testRow.UpdatedFields
+
+                foreach (
+                    $testProp in 
+                    $actualRow.PSObject.Properties.Name 
+                ) {
+                    @(
+                        'SamAccountName', 'Status', 'UpdatedFields',
+                        'Description', 'Title', 'Office'
+                    ) | 
+                    Should -Contain $testProp
+                }
+            }
+        }
+    }
+} -Tag test

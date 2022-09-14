@@ -81,7 +81,7 @@ Begin {
             #endregion
 
             #region Test .json file
-            if (-not ($adPropertyToMonitor = $file.AD.PropertyToMonitor)) {
+            if (-not ([array]$adPropertyToMonitor = $file.AD.PropertyToMonitor)) {
                 throw "Property 'AD.PropertyToMonitor' not found."
             }
             if (-not ([array]$adPropertyInReport = $file.AD.PropertyInReport)) {
@@ -529,6 +529,18 @@ Process {
             $(if ($differencesAdUsers.Count -ne 1) { 's' }),
             $excelDifferencesParams.Path
             Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
+
+            foreach (
+                $p in 
+                ($adPropertyToMonitor + @('SamAccountName', 'Status'))
+            ) {
+                if (
+                    ($adPropertyInReport -ne '*') -and
+                    ($adPropertyInReport -notContains $p)
+                ) {
+                    $adPropertyInReport += $p
+                }   
+            }
 
             $selectParams = @{
                 Property        = (
