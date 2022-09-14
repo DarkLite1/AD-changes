@@ -367,6 +367,10 @@ Process {
             ErrorAction   = 'Stop'
         }
         $previousAdUsers = Import-Excel @params
+
+        if (-not $previousAdUsers) {
+            throw 'No previously exported AD user accounts found'
+        }
         #endregion
     }
     Catch {
