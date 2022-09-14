@@ -22,11 +22,11 @@
 
     .PARAMETER AD.PropertyToMonitor
         Collection of AD fields where to look for changes. All other fields are 
-        disregarded.
+        disregarded. The wildcard '*' is also supported.
 
     .PARAMETER AD.PropertyInReport
         Collection of AD fields to export to the Excel file where the changes
-        are reported.
+        are reported. The wildcard '*' is also supported.
 
     .PARAMETER SendMail.Header
         The header to use in the e-mail sent to the end user.
