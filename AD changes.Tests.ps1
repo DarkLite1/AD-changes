@@ -745,8 +745,8 @@ Describe 'when the script runs after a snapshot was created' {
 
         $testJsonFile = @{
             AD       = @{
-                PropertyToMonitor = @('Office')
-                PropertyInReport  = @('SamAccountName', 'Office', 'Title')
+                PropertyToMonitor = @('Description', 'Title')
+                PropertyInReport  = @('SamAccountName', 'Description', 'Title')
                 OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
             }
             SendMail = @{
@@ -883,6 +883,7 @@ Describe 'when the script runs after a snapshot was created' {
                 $testExportedExcelRows = @(
                     @{
                         Status                    = 'REMOVED'
+                        Updated                   = ''
                         AccountExpirationDate     = $testAdUser[1].AccountExpirationDate
                         Country                   = $testAdUser[1].Co
                         Company                   = $testAdUser[1].Company
@@ -941,6 +942,7 @@ Describe 'when the script runs after a snapshot was created' {
                         $_.SamAccountName -eq $testRow.SamAccountName
                     }
                     $actualRow.Status | Should -Be $testRow.Status
+                    $actualRow.Updated | Should -Be $testRow.Updated
                     $actualRow.AccountExpirationDate.ToString('yyyyMMdd HHmm') | 
                     Should -Be $testRow.AccountExpirationDate.ToString('yyyyMMdd HHmm')
                     $actualRow.DisplayName | Should -Be $testRow.DisplayName
@@ -1199,6 +1201,7 @@ Describe 'when the script runs after a snapshot was created' {
                 $testExportedExcelRows = @(
                     @{
                         Status                    = 'ADDED'
+                        Updated                   = ''
                         AccountExpirationDate     = $testAdUser[2].AccountExpirationDate
                         Country                   = $testAdUser[2].Co
                         Company                   = $testAdUser[2].Company
@@ -1257,6 +1260,334 @@ Describe 'when the script runs after a snapshot was created' {
                         $_.SamAccountName -eq $testRow.SamAccountName
                     }
                     $actualRow.Status | Should -Be $testRow.Status
+                    $actualRow.Updated | Should -Be $testRow.Updated
+                    $actualRow.AccountExpirationDate.ToString('yyyyMMdd HHmm') | 
+                    Should -Be $testRow.AccountExpirationDate.ToString('yyyyMMdd HHmm')
+                    $actualRow.DisplayName | Should -Be $testRow.DisplayName
+                    $actualRow.Country | Should -Be $testRow.Country
+                    $actualRow.Company | Should -Be $testRow.Company
+                    $actualRow.Department | Should -Be $testRow.Department
+                    $actualRow.Description | Should -Be $testRow.Description
+                    $actualRow.DisplayName | Should -Be $testRow.DisplayName
+                    $actualRow.EmailAddress | Should -Be $testRow.EmailAddress
+                    $actualRow.EmployeeID | Should -Be $testRow.EmployeeID
+                    $actualRow.EmployeeType | Should -Be $testRow.EmployeeType
+                    $actualRow.Enabled | Should -Be $testRow.Enabled
+                    $actualRow.Fax | Should -Be $testRow.Fax
+                    $actualRow.FirstName | Should -Be $testRow.FirstName
+                    $actualRow.HeidelbergCementBillingID | 
+                    Should -Be $testRow.HeidelbergCementBillingID
+                    $actualRow.HomePhone | Should -Be $testRow.HomePhone
+                    $actualRow.HomeDirectory | Should -Be $testRow.HomeDirectory
+                    $actualRow.IpPhone | Should -Be $testRow.IpPhone
+                    $actualRow.LastName | Should -Be $testRow.LastName
+                    $actualRow.LogonScript | Should -Be $testRow.LogonScript
+                    $actualRow.LastLogonDate.ToString('yyyyMMdd HHmm') | 
+                    Should -Be $testRow.LastLogonDate.ToString('yyyyMMdd HHmm')
+                    $actualRow.LockedOut | Should -Be $testRow.LockedOut
+                    $actualRow.Manager | Should -Be $testRow.Manager
+                    $actualRow.MobilePhone | Should -Be $testRow.MobilePhone
+                    $actualRow.Name | Should -Be $testRow.Name
+                    $actualRow.Notes | Should -Be $testRow.Notes
+                    $actualRow.Office | Should -Be $testRow.Office
+                    $actualRow.OfficePhone | Should -Be $testRow.OfficePhone
+                    $actualRow.OU | Should -Be $testRow.OU
+                    $actualRow.Pager | Should -Be $testRow.Pager
+                    $actualRow.PasswordExpired | Should -Be $testRow.PasswordExpired
+                    $actualRow.PasswordNeverExpires | 
+                    Should -Be $testRow.PasswordNeverExpires
+                    $actualRow.SamAccountName | Should -Be $testRow.SamAccountName
+                    $actualRow.Title | Should -Be $testRow.Title
+                    $actualRow.TSAllowLogon | Should -Be $testRow.TSAllowLogon
+                    $actualRow.TSHomeDirectory | Should -Be $testRow.TSHomeDirectory
+                    $actualRow.TSHomeDrive | Should -Be $testRow.TSHomeDrive
+                    $actualRow.TSUserProfile | Should -Be $testRow.TSUserProfile
+                    $actualRow.UserPrincipalName | 
+                    Should -Be $testRow.UserPrincipalName
+                    $actualRow.WhenChanged.ToString('yyyyMMdd HHmm') | 
+                    Should -Be $testRow.WhenChanged.ToString('yyyyMMdd HHmm')
+                    $actualRow.WhenCreated.ToString('yyyyMMdd HHmm') | 
+                    Should -Be $testRow.WhenCreated.ToString('yyyyMMdd HHmm')
+                }
+            }
+        }
+    }
+    Context 'and a user account is updated in AD' {
+        BeforeAll {
+            $testOriginalValue = @{
+                Description = $testAdUser[0].Description
+                Title       = $testAdUser[0].Title
+            }
+
+            $testAdUser[0].Description = 'changed description'
+            $testAdUser[0].Title = 'changed title'
+
+            Mock Get-ADUser {
+                $testAdUser[0..1]
+            }
+
+            .$testScript @testParams
+        }
+        Context 'export an Excel file with all current AD user accounts' {
+            BeforeAll {
+                $testExportedExcelRows = @(
+                    @{
+                        AccountExpirationDate     = $testAdUser[0].AccountExpirationDate
+                        Country                   = $testAdUser[0].Co
+                        Company                   = $testAdUser[0].Company
+                        Department                = $testAdUser[0].Department
+                        Description               = $testAdUser[0].Description
+                        DisplayName               = $testAdUser[0].DisplayName
+                        EmailAddress              = $testAdUser[0].EmailAddress
+                        EmployeeID                = $testAdUser[0].EmployeeID
+                        EmployeeType              = $testAdUser[0].EmployeeType
+                        Enabled                   = $testAdUser[0].Enabled
+                        Fax                       = $testAdUser[0].Fax
+                        FirstName                 = $testAdUser[0].GivenName
+                        HeidelbergCementBillingID = $testAdUser[0].extensionAttribute8
+                        HomePhone                 = $testAdUser[0].HomePhone
+                        HomeDirectory             = $testAdUser[0].HomeDirectory
+                        IpPhone                   = $testAdUser[0].IpPhone
+                        LastName                  = $testAdUser[0].Surname
+                        LastLogonDate             = $testAdUser[0].LastLogonDate
+                        LockedOut                 = $testAdUser[0].LockedOut
+                        Manager                   = 'manager chuck'
+                        MobilePhone               = $testAdUser[0].MobilePhone
+                        Name                      = $testAdUser[0].Name
+                        Notes                     = 'best guy ever'
+                        Office                    = $testAdUser[0].Office
+                        OfficePhone               = $testAdUser[0].OfficePhone
+                        OU                        = 'OU chuck'
+                        Pager                     = $testAdUser[0].Pager
+                        PasswordExpired           = $testAdUser[0].PasswordExpired
+                        PasswordNeverExpires      = $testAdUser[0].PasswordNeverExpires
+                        SamAccountName            = $testAdUser[0].SamAccountName
+                        LogonScript               = $testAdUser[0].scriptPath
+                        Title                     = $testAdUser[0].Title
+                        TSAllowLogon              = 'TS AllowLogon chuck'
+                        TSHomeDirectory           = 'TS HomeDirectory chuck'
+                        TSHomeDrive               = 'TS HomeDrive chuck'
+                        TSUserProfile             = 'TS UserProfile chuck'
+                        UserPrincipalName         = $testAdUser[0].UserPrincipalName
+                        WhenChanged               = $testAdUser[0].WhenChanged
+                        WhenCreated               = $testAdUser[0].WhenCreated
+                    }
+                    @{
+                        AccountExpirationDate     = $testAdUser[1].AccountExpirationDate
+                        Country                   = $testAdUser[1].Co
+                        Company                   = $testAdUser[1].Company
+                        Department                = $testAdUser[1].Department
+                        Description               = $testAdUser[1].Description
+                        DisplayName               = $testAdUser[1].DisplayName
+                        EmailAddress              = $testAdUser[1].EmailAddress
+                        EmployeeID                = $testAdUser[1].EmployeeID
+                        EmployeeType              = $testAdUser[1].EmployeeType
+                        Enabled                   = $testAdUser[1].Enabled
+                        Fax                       = $testAdUser[1].Fax
+                        FirstName                 = $testAdUser[1].GivenName
+                        HeidelbergCementBillingID = $testAdUser[1].extensionAttribute8
+                        HomePhone                 = $testAdUser[1].HomePhone
+                        HomeDirectory             = $testAdUser[1].HomeDirectory
+                        IpPhone                   = $testAdUser[1].IpPhone
+                        LastName                  = $testAdUser[1].Surname
+                        LastLogonDate             = $testAdUser[1].LastLogonDate
+                        LockedOut                 = $testAdUser[1].LockedOut
+                        Manager                   = 'manager bob'
+                        MobilePhone               = $testAdUser[1].MobilePhone
+                        Name                      = $testAdUser[1].Name
+                        Notes                     = 'best sniper in the world'
+                        Office                    = $testAdUser[1].Office
+                        OfficePhone               = $testAdUser[1].OfficePhone
+                        OU                        = 'OU bob'
+                        Pager                     = $testAdUser[1].Pager
+                        PasswordExpired           = $testAdUser[1].PasswordExpired
+                        PasswordNeverExpires      = $testAdUser[1].PasswordNeverExpires
+                        SamAccountName            = $testAdUser[1].SamAccountName
+                        LogonScript               = $testAdUser[1].scriptPath
+                        Title                     = $testAdUser[1].Title
+                        TSAllowLogon              = 'TS AllowLogon bob'
+                        TSHomeDirectory           = 'TS HomeDirectory bob'
+                        TSHomeDrive               = 'TS HomeDrive bob'
+                        TSUserProfile             = 'TS UserProfile bob'
+                        UserPrincipalName         = $testAdUser[1].UserPrincipalName
+                        WhenChanged               = $testAdUser[1].WhenChanged
+                        WhenCreated               = $testAdUser[1].WhenCreated
+                    }
+                )    
+    
+                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - State{*}.xlsx' | 
+                Sort-Object 'CreationTime' | Select-Object -Last 1
+    
+                $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'AllUsers'
+            }
+            It 'to the log folder' {
+                $testExcelLogFile | Should -Not -BeNullOrEmpty
+            }
+            It 'with the correct total rows' {
+                $actual | Should -HaveCount $testExportedExcelRows.Count
+            }
+            It 'with the correct data in the rows' {
+                foreach ($testRow in $testExportedExcelRows) {
+                    $actualRow = $actual | Where-Object {
+                        $_.SamAccountName -eq $testRow.SamAccountName
+                    }
+                    $actualRow.AccountExpirationDate.ToString('yyyyMMdd HHmm') | 
+                    Should -Be $testRow.AccountExpirationDate.ToString('yyyyMMdd HHmm')
+                    $actualRow.DisplayName | Should -Be $testRow.DisplayName
+                    $actualRow.Country | Should -Be $testRow.Country
+                    $actualRow.Company | Should -Be $testRow.Company
+                    $actualRow.Department | Should -Be $testRow.Department
+                    $actualRow.Description | Should -Be $testRow.Description
+                    $actualRow.DisplayName | Should -Be $testRow.DisplayName
+                    $actualRow.EmailAddress | Should -Be $testRow.EmailAddress
+                    $actualRow.EmployeeID | Should -Be $testRow.EmployeeID
+                    $actualRow.EmployeeType | Should -Be $testRow.EmployeeType
+                    $actualRow.Enabled | Should -Be $testRow.Enabled
+                    $actualRow.Fax | Should -Be $testRow.Fax
+                    $actualRow.FirstName | Should -Be $testRow.FirstName
+                    $actualRow.HeidelbergCementBillingID | 
+                    Should -Be $testRow.HeidelbergCementBillingID
+                    $actualRow.HomePhone | Should -Be $testRow.HomePhone
+                    $actualRow.HomeDirectory | Should -Be $testRow.HomeDirectory
+                    $actualRow.IpPhone | Should -Be $testRow.IpPhone
+                    $actualRow.LastName | Should -Be $testRow.LastName
+                    $actualRow.LogonScript | Should -Be $testRow.LogonScript
+                    $actualRow.LastLogonDate.ToString('yyyyMMdd HHmm') | 
+                    Should -Be $testRow.LastLogonDate.ToString('yyyyMMdd HHmm')
+                    $actualRow.LockedOut | Should -Be $testRow.LockedOut
+                    $actualRow.Manager | Should -Be $testRow.Manager
+                    $actualRow.MobilePhone | Should -Be $testRow.MobilePhone
+                    $actualRow.Name | Should -Be $testRow.Name
+                    $actualRow.Notes | Should -Be $testRow.Notes
+                    $actualRow.Office | Should -Be $testRow.Office
+                    $actualRow.OfficePhone | Should -Be $testRow.OfficePhone
+                    $actualRow.OU | Should -Be $testRow.OU
+                    $actualRow.Pager | Should -Be $testRow.Pager
+                    $actualRow.PasswordExpired | Should -Be $testRow.PasswordExpired
+                    $actualRow.PasswordNeverExpires | 
+                    Should -Be $testRow.PasswordNeverExpires
+                    $actualRow.SamAccountName | Should -Be $testRow.SamAccountName
+                    $actualRow.Title | Should -Be $testRow.Title
+                    $actualRow.TSAllowLogon | Should -Be $testRow.TSAllowLogon
+                    $actualRow.TSHomeDirectory | Should -Be $testRow.TSHomeDirectory
+                    $actualRow.TSHomeDrive | Should -Be $testRow.TSHomeDrive
+                    $actualRow.TSUserProfile | Should -Be $testRow.TSUserProfile
+                    $actualRow.UserPrincipalName | 
+                    Should -Be $testRow.UserPrincipalName
+                    $actualRow.WhenChanged.ToString('yyyyMMdd HHmm') | 
+                    Should -Be $testRow.WhenChanged.ToString('yyyyMMdd HHmm')
+                    $actualRow.WhenCreated.ToString('yyyyMMdd HHmm') | 
+                    Should -Be $testRow.WhenCreated.ToString('yyyyMMdd HHmm')
+                }
+            }
+        }
+        Context 'export an Excel file with the differences' {
+            BeforeAll {
+                $testExportedExcelRows = @(
+                    @{
+                        Status                    = 'UPDATED'
+                        Updated                   = 'Description, Title'
+                        AccountExpirationDate     = $testAdUser[0].AccountExpirationDate
+                        Country                   = $testAdUser[0].Co
+                        Company                   = $testAdUser[0].Company
+                        Department                = $testAdUser[0].Department
+                        Description               = $testAdUser[0].Description
+                        DisplayName               = $testAdUser[0].DisplayName
+                        EmailAddress              = $testAdUser[0].EmailAddress
+                        EmployeeID                = $testAdUser[0].EmployeeID
+                        EmployeeType              = $testAdUser[0].EmployeeType
+                        Enabled                   = $testAdUser[0].Enabled
+                        Fax                       = $testAdUser[0].Fax
+                        FirstName                 = $testAdUser[0].GivenName
+                        HeidelbergCementBillingID = $testAdUser[0].extensionAttribute8
+                        HomePhone                 = $testAdUser[0].HomePhone
+                        HomeDirectory             = $testAdUser[0].HomeDirectory
+                        IpPhone                   = $testAdUser[0].IpPhone
+                        LastName                  = $testAdUser[0].Surname
+                        LastLogonDate             = $testAdUser[0].LastLogonDate
+                        LockedOut                 = $testAdUser[0].LockedOut
+                        Manager                   = 'manager chuck'
+                        MobilePhone               = $testAdUser[0].MobilePhone
+                        Name                      = $testAdUser[0].Name
+                        Notes                     = 'best guy ever'
+                        Office                    = $testAdUser[0].Office
+                        OfficePhone               = $testAdUser[0].OfficePhone
+                        OU                        = 'OU chuck'
+                        Pager                     = $testAdUser[0].Pager
+                        PasswordExpired           = $testAdUser[0].PasswordExpired
+                        PasswordNeverExpires      = $testAdUser[0].PasswordNeverExpires
+                        SamAccountName            = $testAdUser[0].SamAccountName
+                        LogonScript               = $testAdUser[0].scriptPath
+                        Title                     = $testAdUser[0].Title
+                        TSAllowLogon              = 'TS AllowLogon chuck'
+                        TSHomeDirectory           = 'TS HomeDirectory chuck'
+                        TSHomeDrive               = 'TS HomeDrive chuck'
+                        TSUserProfile             = 'TS UserProfile chuck'
+                        UserPrincipalName         = $testAdUser[0].UserPrincipalName
+                        WhenChanged               = $testAdUser[0].WhenChanged
+                        WhenCreated               = $testAdUser[0].WhenCreated
+                    }
+                    @{
+                        Status                    = 'BEFORE_UPDATE'
+                        Updated                   = 'Description, Title'
+                        AccountExpirationDate     = $testAdUser[0].AccountExpirationDate
+                        Country                   = $testAdUser[0].Co
+                        Company                   = $testAdUser[0].Company
+                        Department                = $testAdUser[0].Department
+                        Description               = $testOriginalValue.Description
+                        DisplayName               = $testAdUser[0].DisplayName
+                        EmailAddress              = $testAdUser[0].EmailAddress
+                        EmployeeID                = $testAdUser[0].EmployeeID
+                        EmployeeType              = $testAdUser[0].EmployeeType
+                        Enabled                   = $testAdUser[0].Enabled
+                        Fax                       = $testAdUser[0].Fax
+                        FirstName                 = $testAdUser[0].GivenName
+                        HeidelbergCementBillingID = $testAdUser[0].extensionAttribute8
+                        HomePhone                 = $testAdUser[0].HomePhone
+                        HomeDirectory             = $testAdUser[0].HomeDirectory
+                        IpPhone                   = $testAdUser[0].IpPhone
+                        LastName                  = $testAdUser[0].Surname
+                        LastLogonDate             = $testAdUser[0].LastLogonDate
+                        LockedOut                 = $testAdUser[0].LockedOut
+                        Manager                   = 'manager chuck'
+                        MobilePhone               = $testAdUser[0].MobilePhone
+                        Name                      = $testAdUser[0].Name
+                        Notes                     = 'best guy ever'
+                        Office                    = $testAdUser[0].Office
+                        OfficePhone               = $testAdUser[0].OfficePhone
+                        OU                        = 'OU chuck'
+                        Pager                     = $testAdUser[0].Pager
+                        PasswordExpired           = $testAdUser[0].PasswordExpired
+                        PasswordNeverExpires      = $testAdUser[0].PasswordNeverExpires
+                        SamAccountName            = $testAdUser[0].SamAccountName
+                        LogonScript               = $testAdUser[0].scriptPath
+                        Title                     = $testOriginalValue.Title
+                        TSAllowLogon              = 'TS AllowLogon chuck'
+                        TSHomeDirectory           = 'TS HomeDirectory chuck'
+                        TSHomeDrive               = 'TS HomeDrive chuck'
+                        TSUserProfile             = 'TS UserProfile chuck'
+                        UserPrincipalName         = $testAdUser[0].UserPrincipalName
+                        WhenChanged               = $testAdUser[0].WhenChanged
+                        WhenCreated               = $testAdUser[0].WhenCreated
+                    }
+                )
+    
+                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences{*}.xlsx'
+    
+                $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'Differences'
+            }
+            It 'to the log folder' {
+                $testExcelLogFile | Should -Not -BeNullOrEmpty
+            }
+            It 'with the correct total rows' {
+                $actual | Should -HaveCount $testExportedExcelRows.Count
+            }
+            It 'with the correct data in the rows' {
+                foreach ($testRow in $testExportedExcelRows) {
+                    $actualRow = $actual | Where-Object {
+                        $_.Status -eq $testRow.Status
+                    }
+                    $actualRow.SamAccountName | Should -Be $testRow.SamAccountName
                     $actualRow.AccountExpirationDate.ToString('yyyyMMdd HHmm') | 
                     Should -Be $testRow.AccountExpirationDate.ToString('yyyyMMdd HHmm')
                     $actualRow.DisplayName | Should -Be $testRow.DisplayName

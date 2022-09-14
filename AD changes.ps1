@@ -381,14 +381,26 @@ Process {
         }
         #endregion
 
-        #region Compare AD users
+        #region Compare AD
+        #region Import current AD users again for comparing equality
+        $params = @{
+            Path          = $excelParams.Path
+            WorksheetName = $excelParams.WorksheetName
+            ErrorAction   = 'Stop'
+        }
+        [Array]$currentAdUsers = Import-Excel @params
+        #endregion
+
+        #region Verbose
         $M = 'Compare {0} previous user{1} with {2} current user{3}' -f 
         $previousAdUsers.Count, $(if ($previousAdUsers.Count -ne 1) { 's' }),
         $currentAdUsers.Count, $(if ($currentAdUsers.Count -ne 1) { 's' })
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+        #endregion
 
         $differencesAdUsers = @()
 
+        #region Find added and removed users
         $params = @{
             ReferenceObject  = $currentAdUsers
             DifferenceObject = $previousAdUsers
@@ -404,12 +416,17 @@ Process {
                     Write-Verbose $M
                     Write-EventLog @EventVerboseParams -Message $M
 
-                    $previousAdUsers | Where-Object { 
-                        $_.SamAccountName -eq $d.SamAccountName 
-                    } | 
+                    $previousAdUsers.Where(
+                        { $_.SamAccountName -eq $d.SamAccountName },
+                        'First', 1
+                    ) | 
                     Select-Object -Property *, @{
                         Name       = 'Status'
                         Expression = { 'REMOVED' }
+                    }, 
+                    @{
+                        Name       = 'Updated'
+                        Expression = { $null }
                     }
                     #endregion
                 }
@@ -419,17 +436,70 @@ Process {
                     Write-Verbose $M
                     Write-EventLog @EventVerboseParams -Message $M
 
-                    $currentAdUsers | Where-Object { 
-                        $_.SamAccountName -eq $d.SamAccountName 
-                    } | 
+                    $currentAdUsers.Where(
+                        { $_.SamAccountName -eq $d.SamAccountName },
+                        'First', 1
+                    ) | 
                     Select-Object -Property *, @{
                         Name       = 'Status'
                         Expression = { 'ADDED' }
+                    },
+                    @{
+                        Name       = 'Updated'
+                        Expression = { $null }
                     }
                     #endregion
                 }
             }
         }
+        #endregion
+
+        #region Find updated users
+        $differencesAdUsers += foreach ($currentAdUser in $currentAdUsers) {
+            $previousAdUser = $previousAdUsers.Where(
+                { $_.SamAccountName -eq $currentAdUser.SamAccountName }, 
+                'First', 1
+            )
+
+            if (-not $previousAdUser) { Continue }
+
+            $propertiesUpdated = @()
+            foreach ($p in $adPropertyToMonitor) {
+                if ($currentAdUser.$p -ne $previousAdUser.$p) {
+                    $M = "User '{0}' property '{1}' updated from '{2}' to '{3}'" -f 
+                    $currentAdUser.SamAccountName, $p,
+                    $previousAdUser.$p, $currentAdUser.$p
+                    Write-Verbose $M
+                    Write-EventLog @EventVerboseParams -Message $M
+
+                    $propertiesUpdated += $p
+                }
+            }
+
+            if ($propertiesUpdated) {
+                $previousAdUsers.Where(
+                    { $_.SamAccountName -eq $currentAdUser.SamAccountName },
+                    'First', 1
+                ) | 
+                Select-Object -Property *, @{
+                    Name       = 'Status'
+                    Expression = { 'BEFORE_UPDATE' }
+                }, @{
+                    Name       = 'Updated'
+                    Expression = { $propertiesUpdated }
+                }
+
+                $currentAdUser | 
+                Select-Object -Property *, @{
+                    Name       = 'Status'
+                    Expression = { 'UPDATED' }
+                }, @{
+                    Name       = 'Updated'
+                    Expression = { $propertiesUpdated }
+                }
+            }
+        }
+        #endregion
 
         $M = 'Found {0} difference{1}' -f $differencesAdUsers.Count, $(
             if ($differencesAdUsers.Count -ne 1) { 's' }
@@ -454,7 +524,11 @@ Process {
             $excelDifferencesParams.Path
             Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
-            $differencesAdUsers | Export-Excel @excelDifferencesParams
+            $differencesAdUsers | Select-Object -Property *, @{
+                Name       = 'Updated'
+                Expression = { $_.Updated -join ', ' }
+            } -ExcludeProperty 'Updated' | 
+            Export-Excel @excelDifferencesParams
         }
         #endregion
     }
