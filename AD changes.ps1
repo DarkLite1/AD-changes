@@ -530,6 +530,7 @@ Process {
             $excelDifferencesParams.Path
             Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
+            #region Add required minimal properties
             foreach (
                 $p in 
                 ($adPropertyToMonitor + @('SamAccountName', 'Status'))
@@ -541,7 +542,8 @@ Process {
                     $adPropertyInReport += $p
                 }   
             }
-
+            #endregion
+            
             $selectParams = @{
                 Property        = (
                     $adPropertyInReport + @{
