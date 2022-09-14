@@ -283,11 +283,24 @@ Begin {
                 Write-Verbose 'All properties will be reported'
             }
             else {
+                #region Test for valid AD properties
                 $adPropertyInReport | Where-Object { 
                     $adProperties.Name -notContains $_ 
                 } | ForEach-Object {
                     throw "Property '$_' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
                 }
+                #endregion
+
+                #region Add required minimal properties
+                foreach (
+                    $p in 
+                    ($adPropertyToMonitor + @('SamAccountName', 'Status'))
+                ) {
+                    if ($adPropertyInReport -notContains $p) {
+                        $adPropertyInReport += $p
+                    }   
+                }
+                #endregion
             }
             #endregion
         }
@@ -530,20 +543,6 @@ Process {
             $excelDifferencesParams.Path
             Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
-            #region Add required minimal properties
-            foreach (
-                $p in 
-                ($adPropertyToMonitor + @('SamAccountName', 'Status'))
-            ) {
-                if (
-                    ($adPropertyInReport -ne '*') -and
-                    ($adPropertyInReport -notContains $p)
-                ) {
-                    $adPropertyInReport += $p
-                }   
-            }
-            #endregion
-            
             $selectParams = @{
                 Property        = (
                     $adPropertyInReport + @{
