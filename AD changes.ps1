@@ -62,6 +62,7 @@ Begin {
             $logParams = @{
                 LogFolder    = New-Item -Path $LogFolder -ItemType 'Directory' -Force -ErrorAction 'Stop'
                 Date         = 'ScriptStartTime'
+                Format       = 'yyyy-MM-dd HHmmss (DayOfWeek)'
                 NoFormatting = $true
                 Unique       = $true
             }
@@ -335,14 +336,16 @@ Process {
             Verbose       = $false
         }
 
-        $M = "Export all AD users to Excel file '{0}'" -f $excelParams.Path
+        $M = "Export {0} row{1} to Excel file '{2}'" -f 
+        $currentAdUsers.Count, $(if ($currentAdUsers.Count -ne 1) { 's' }), 
+        $excelParams.Path
         Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
         $currentAdUsers | Export-Excel @excelParams
         #endregion
 
         #region Get previously exported AD users
-        $M = "Get previously exported AD users from the latest exported Excel file in folder '{0}'" -f $logParams.LogFolder
+        $M = "Get previously exported AD users from the latest Excel file in folder '{0}'" -f $logParams.LogFolder
         Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
         $params = @{
@@ -367,8 +370,9 @@ Process {
         }
         [Array]$previousAdUsers = Import-Excel @params
 
-        $M = "Found {0} AD user accounts in Excel file '{1}'" -f 
-        $previousAdUsers.Count, $lastExcelFile.FullName
+        $M = "Found {0} AD user account{1} in Excel file '{2}'" -f 
+        $previousAdUsers.Count, $(if ($previousAdUsers.Count -ne 1) { 's' }),
+        $lastExcelFile.FullName
         Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
         if (-not $previousAdUsers) {
@@ -377,7 +381,80 @@ Process {
         #endregion
 
         #region Compare AD users
-        
+        $M = 'Compare {0} previous user{1} with {2} current user{3}' -f 
+        $previousAdUsers.Count, $(if ($previousAdUsers.Count -ne 1) { 's' }),
+        $currentAdUsers.Count, $(if ($currentAdUsers.Count -ne 1) { 's' })
+        Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+
+        $differencesAdUsers = @()
+
+        $params = @{
+            ReferenceObject  = $currentAdUsers
+            DifferenceObject = $previousAdUsers
+            Property         = 'SamAccountName'
+        }
+        $diffSamAccounts = Compare-Object @params
+
+        $differencesAdUsers += Foreach ($d in $diffSamAccounts) {
+            Switch ($d.SideIndicator) {
+                '=>' {
+                    #region User no longer in AD
+                    $M = "User '{0}' removed from AD" -f $d.SamAccountName
+                    Write-Verbose $M
+                    Write-EventLog @EventVerboseParams -Message $M
+
+                    $previousAdUsers | Where-Object { 
+                        $_.SamAccountName -eq $d.SamAccountName 
+                    } | 
+                    Select-Object -Property *, @{
+                        Name       = 'Status'
+                        Expression = { 'REMOVED' }
+                    }
+                    #endregion
+                }
+                '<=' {
+                    #region New user
+                    $M = "User '{0}' added to AD" -f $d.SamAccountName
+                    Write-Verbose $M
+                    Write-EventLog @EventVerboseParams -Message $M
+
+                    $currentAdUsers | Where-Object { 
+                        $_.SamAccountName -eq $d.SamAccountName 
+                    } | 
+                    Select-Object -Property *, @{
+                        Name       = 'Status'
+                        Expression = { 'ADDED' }
+                    }
+                    #endregion
+                }
+            }
+        }
+
+        $M = 'Found {0} difference{1}' -f $differencesAdUsers.Count, $(
+            if ($differencesAdUsers.Count -ne 1) { 's' }
+        )
+        Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+        #endregion
+
+        #region Export differences between previous and current AD users
+        if ($differencesAdUsers) {
+            $excelDifferencesParams = @{
+                Path          = New-LogFileNameHC @LogParams -Name "$ScriptName - Differences.xlsx"
+                WorksheetName = 'Differences'
+                TableName     = 'Differences'
+                AutoSize      = $true
+                FreezeTopRow  = $true
+                Verbose       = $false
+            }
+
+            $M = "Export {0} row{1} to Excel file '{2}'" -f 
+            $differencesAdUsers.Count, 
+            $(if ($differencesAdUsers.Count -ne 1) { 's' }),
+            $excelDifferencesParams.Path
+            Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
+
+            $differencesAdUsers | Export-Excel @excelDifferencesParams
+        }
         #endregion
     }
     Catch {

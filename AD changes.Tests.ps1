@@ -686,7 +686,7 @@ Describe 'when the script runs after a snapshot was created' {
 
         .$testScript @testParams
     }
-    Context 'removed user accounts are detected' {
+    Context 'and a user account is removed from AD' {
         BeforeAll {
             Mock Get-ADUser {
                 $testAdUser[0]
@@ -694,7 +694,7 @@ Describe 'when the script runs after a snapshot was created' {
 
             .$testScript @testParams
         }
-        Context 'export an Excel file with all AD user accounts' {
+        Context 'export an Excel file with all current AD user accounts' {
             BeforeAll {
                 $testExportedExcelRows = @(
                     @{
@@ -806,51 +806,11 @@ Describe 'when the script runs after a snapshot was created' {
                 }
             }
         }
-        Context 'export an Excel file with all AD user accounts' {
+        Context 'export an Excel file with the differences' {
             BeforeAll {
                 $testExportedExcelRows = @(
                     @{
-                        AccountExpirationDate     = $testAdUser[0].AccountExpirationDate
-                        Country                   = $testAdUser[0].Co
-                        Company                   = $testAdUser[0].Company
-                        Department                = $testAdUser[0].Department
-                        Description               = $testAdUser[0].Description
-                        DisplayName               = $testAdUser[0].DisplayName
-                        EmailAddress              = $testAdUser[0].EmailAddress
-                        EmployeeID                = $testAdUser[0].EmployeeID
-                        EmployeeType              = $testAdUser[0].EmployeeType
-                        Enabled                   = $testAdUser[0].Enabled
-                        Fax                       = $testAdUser[0].Fax
-                        FirstName                 = $testAdUser[0].GivenName
-                        HeidelbergCementBillingID = $testAdUser[0].extensionAttribute8
-                        HomePhone                 = $testAdUser[0].HomePhone
-                        HomeDirectory             = $testAdUser[0].HomeDirectory
-                        IpPhone                   = $testAdUser[0].IpPhone
-                        LastName                  = $testAdUser[0].Surname
-                        LastLogonDate             = $testAdUser[0].LastLogonDate
-                        LockedOut                 = $testAdUser[0].LockedOut
-                        Manager                   = 'manager chuck'
-                        MobilePhone               = $testAdUser[0].MobilePhone
-                        Name                      = $testAdUser[0].Name
-                        Notes                     = 'best guy ever'
-                        Office                    = $testAdUser[0].Office
-                        OfficePhone               = $testAdUser[0].OfficePhone
-                        OU                        = 'OU chuck'
-                        Pager                     = $testAdUser[0].Pager
-                        PasswordExpired           = $testAdUser[0].PasswordExpired
-                        PasswordNeverExpires      = $testAdUser[0].PasswordNeverExpires
-                        SamAccountName            = $testAdUser[0].SamAccountName
-                        LogonScript               = $testAdUser[0].scriptPath
-                        Title                     = $testAdUser[0].Title
-                        TSAllowLogon              = 'TS AllowLogon chuck'
-                        TSHomeDirectory           = 'TS HomeDirectory chuck'
-                        TSHomeDrive               = 'TS HomeDrive chuck'
-                        TSUserProfile             = 'TS UserProfile chuck'
-                        UserPrincipalName         = $testAdUser[0].UserPrincipalName
-                        WhenChanged               = $testAdUser[0].WhenChanged
-                        WhenCreated               = $testAdUser[0].WhenCreated
-                    }
-                    @{
+                        Status                    = 'REMOVED'
                         AccountExpirationDate     = $testAdUser[1].AccountExpirationDate
                         Country                   = $testAdUser[1].Co
                         Company                   = $testAdUser[1].Company
@@ -893,9 +853,9 @@ Describe 'when the script runs after a snapshot was created' {
                     }
                 )
     
-                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - State{*}.xlsx'
+                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences{*}.xlsx'
     
-                $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'AllUsers'
+                $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'Differences'
             }
             It 'to the log folder' {
                 $testExcelLogFile | Should -Not -BeNullOrEmpty
@@ -908,6 +868,7 @@ Describe 'when the script runs after a snapshot was created' {
                     $actualRow = $actual | Where-Object {
                         $_.SamAccountName -eq $testRow.SamAccountName
                     }
+                    $actualRow.Status | Should -Be $testRow.Status
                     $actualRow.AccountExpirationDate.ToString('yyyyMMdd HHmm') | 
                     Should -Be $testRow.AccountExpirationDate.ToString('yyyyMMdd HHmm')
                     $actualRow.DisplayName | Should -Be $testRow.DisplayName
@@ -957,7 +918,7 @@ Describe 'when the script runs after a snapshot was created' {
                     Should -Be $testRow.WhenCreated.ToString('yyyyMMdd HHmm')
                 }
             }
-        } -Skip
+        }
     }
     
     Context 'send a mail to the user when SendMail.When is Always' {
