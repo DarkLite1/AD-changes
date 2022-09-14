@@ -272,13 +272,23 @@ Begin {
                     Expression = { $_.WhenCreated } 
                 }
             )
-
-            $adPropertyToMonitor | Where-Object { 
-                $adProperties.Name -notContains $_ 
-            } | ForEach-Object {
-                throw "Property '$_' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
+            if ($adPropertyToMonitor -eq '*') {
+                Write-Verbose 'All properties will be monitored'
+                $adPropertyToMonitor = $adProperties.Name | Where-Object {
+                    @(
+                        'WhenChanged', 'WhenCreated', 'LastLogonDate'
+                    ) -notContains $_
+                }
             }
-
+            else {
+                #region Test for valid AD properties
+                $adPropertyToMonitor | Where-Object { 
+                    $adProperties.Name -notContains $_ 
+                } | ForEach-Object {
+                    throw "Property '$_' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
+                }
+                #endregion
+            }
             if ($adPropertyInReport -eq '*') {
                 Write-Verbose 'All properties will be reported'
             }
