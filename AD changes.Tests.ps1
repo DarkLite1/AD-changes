@@ -348,8 +348,8 @@ Describe 'when the script runs for the first time' {
 
         .$testScript @testParams
     }
-    Context 'Get-AdUser' {
-        It 'is called with the correct arguments' {
+    Context 'collect all AD user accounts' {
+        It 'call Get-AdUser with the correct arguments' {
             Should -Invoke Get-AdUser -Scope Describe -Times 1 -Exactly -ParameterFilter {
                 ($SearchBase -eq $testJsonFile.AD.OU)
             }
@@ -507,4 +507,12 @@ Describe 'when the script runs for the first time' {
             }
         }
     }
-}
+    Context 'no e-mail or further action is taken' {
+        It 'because there are no previous AD user accounts available in a previously exported Excel file' {
+            Should -Not -Invoke Send-MailHC -Scope Describe 
+            Should -Invoke Write-EventLog -Scope Describe -Times 1 -Exactly -ParameterFilter {
+                $Message -like '*No comparison possible*'
+            }
+        }
+    }
+} 

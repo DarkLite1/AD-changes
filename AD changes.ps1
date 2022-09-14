@@ -330,6 +330,7 @@ Process {
             TableName     = 'AllUsers'
             AutoSize      = $true
             FreezeTopRow  = $true
+            Verbose       = $false
         }
 
         $M = "Export all AD users to Excel file '{0}'" -f $excelParams.Path
@@ -339,14 +340,20 @@ Process {
         #endregion
 
         #region Get previously exported AD users
+        $M = "Get previously exported AD users from the latest Excel file in folder '{0}'" -f $logParams.LogFolder
+        Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
+
         $params = @{
             LiteralPath = $logParams.LogFolder
             Filter      = '* - State.xlsx'
             File        = $true
         }
         $lastExcelFile = Get-ChildItem @params | Where-Object {
-            $_.CreationTime.Date -ge $now.Date
+            $_.CreationTime -lt $now
         } | Sort-Object 'CreationTime' | Select-Object -Last 1
+
+        $M = "Last Excel file containing AD users accounts is '{0}'" -f $lastExcelFile.FullName
+        Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
         if (-not $lastExcelFile) {
             $M = 'No comparison possible because there is no previously exported Excel file with AD user accounts yet. The next run will not have this issue because a snapshot of the current AD users has just been created and exported to Excel. This file will then be used for comparison on the next run.'
