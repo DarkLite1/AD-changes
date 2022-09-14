@@ -84,7 +84,7 @@ Begin {
             if (-not ($adPropertyToMonitor = $file.AD.PropertyToMonitor)) {
                 throw "Property 'AD.PropertyToMonitor' not found."
             }
-            if (-not ($adPropertyInReport = $file.AD.PropertyInReport)) {
+            if (-not ([array]$adPropertyInReport = $file.AD.PropertyInReport)) {
                 throw "Property 'AD.PropertyInReport' not found."
             }
             if (-not ($adOU = $file.AD.OU)) {
@@ -278,10 +278,16 @@ Begin {
             } | ForEach-Object {
                 throw "Property '$_' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
             }
-            $adPropertyInReport | Where-Object { 
-                $adProperties.Name -notContains $_ 
-            } | ForEach-Object {
-                throw "Property '$_' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
+
+            if ($adPropertyInReport -eq '*') {
+                Write-Verbose 'All properties will be reported'
+            }
+            else {
+                $adPropertyInReport | Where-Object { 
+                    $adProperties.Name -notContains $_ 
+                } | ForEach-Object {
+                    throw "Property '$_' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
+                }
             }
             #endregion
         }
@@ -524,10 +530,16 @@ Process {
             $excelDifferencesParams.Path
             Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
-            $differencesAdUsers | Select-Object -Property *, @{
-                Name       = 'UpdatedFields'
-                Expression = { $_.Updated -join ', ' }
-            } -ExcludeProperty 'UpdatedFields' | 
+            $selectParams = @{
+                Property        = (
+                    $adPropertyInReport + @{
+                        Name       = 'UpdatedFields'
+                        Expression = { $_.UpdatedFields -join ', ' }
+                    }
+                )
+                ExcludeProperty = 'UpdatedFields'
+            }
+            $differencesAdUsers | Select-Object @selectParams | 
             Export-Excel @excelDifferencesParams
         }
         #endregion

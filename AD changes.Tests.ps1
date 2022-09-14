@@ -746,7 +746,7 @@ Describe 'when the script runs after a snapshot was created' {
         $testJsonFile = @{
             AD       = @{
                 PropertyToMonitor = @('Description', 'Title')
-                PropertyInReport  = @('SamAccountName', 'Description', 'Title')
+                PropertyInReport  = @('*')
                 OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
             }
             SendMail = @{
@@ -1312,7 +1312,7 @@ Describe 'when the script runs after a snapshot was created' {
             }
         }
     }
-    Context 'and a user account is UpdatedFields in AD' {
+    Context 'and a user account is updated in AD' {
         BeforeAll {
             $testOriginalValue = @{
                 Description = $testAdUser[0].Description
@@ -1639,7 +1639,7 @@ Describe 'when the script runs after a snapshot was created' {
                 }
             }
         }
-    }
+    } -Tag test
     
     Context 'send a mail to the user when SendMail.When is Always' {
         BeforeAll {
@@ -1671,4 +1671,4 @@ Describe 'when the script runs after a snapshot was created' {
             }
         }
     } -Skip
-} -Tag test
+}
