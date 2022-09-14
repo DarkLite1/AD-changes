@@ -883,7 +883,7 @@ Describe 'when the script runs after a snapshot was created' {
                 $testExportedExcelRows = @(
                     @{
                         Status                    = 'REMOVED'
-                        Updated                   = ''
+                        UpdatedFields             = ''
                         AccountExpirationDate     = $testAdUser[1].AccountExpirationDate
                         Country                   = $testAdUser[1].Co
                         Company                   = $testAdUser[1].Company
@@ -942,7 +942,7 @@ Describe 'when the script runs after a snapshot was created' {
                         $_.SamAccountName -eq $testRow.SamAccountName
                     }
                     $actualRow.Status | Should -Be $testRow.Status
-                    $actualRow.Updated | Should -Be $testRow.Updated
+                    $actualRow.UpdatedFields | Should -Be $testRow.UpdatedFields
                     $actualRow.AccountExpirationDate.ToString('yyyyMMdd HHmm') | 
                     Should -Be $testRow.AccountExpirationDate.ToString('yyyyMMdd HHmm')
                     $actualRow.DisplayName | Should -Be $testRow.DisplayName
@@ -1201,7 +1201,7 @@ Describe 'when the script runs after a snapshot was created' {
                 $testExportedExcelRows = @(
                     @{
                         Status                    = 'ADDED'
-                        Updated                   = ''
+                        UpdatedFields             = ''
                         AccountExpirationDate     = $testAdUser[2].AccountExpirationDate
                         Country                   = $testAdUser[2].Co
                         Company                   = $testAdUser[2].Company
@@ -1260,7 +1260,7 @@ Describe 'when the script runs after a snapshot was created' {
                         $_.SamAccountName -eq $testRow.SamAccountName
                     }
                     $actualRow.Status | Should -Be $testRow.Status
-                    $actualRow.Updated | Should -Be $testRow.Updated
+                    $actualRow.UpdatedFields | Should -Be $testRow.UpdatedFields
                     $actualRow.AccountExpirationDate.ToString('yyyyMMdd HHmm') | 
                     Should -Be $testRow.AccountExpirationDate.ToString('yyyyMMdd HHmm')
                     $actualRow.DisplayName | Should -Be $testRow.DisplayName
@@ -1312,7 +1312,7 @@ Describe 'when the script runs after a snapshot was created' {
             }
         }
     }
-    Context 'and a user account is updated in AD' {
+    Context 'and a user account is UpdatedFields in AD' {
         BeforeAll {
             $testOriginalValue = @{
                 Description = $testAdUser[0].Description
@@ -1486,7 +1486,7 @@ Describe 'when the script runs after a snapshot was created' {
                 $testExportedExcelRows = @(
                     @{
                         Status                    = 'AFTER_UPDATE'
-                        Updated                   = 'Description, Title'
+                        UpdatedFields             = 'Description, Title'
                         AccountExpirationDate     = $testAdUser[0].AccountExpirationDate
                         Country                   = $testAdUser[0].Co
                         Company                   = $testAdUser[0].Company
@@ -1529,7 +1529,7 @@ Describe 'when the script runs after a snapshot was created' {
                     }
                     @{
                         Status                    = 'BEFORE_UPDATE'
-                        Updated                   = 'Description, Title'
+                        UpdatedFields             = 'Description, Title'
                         AccountExpirationDate     = $testAdUser[0].AccountExpirationDate
                         Country                   = $testAdUser[0].Co
                         Company                   = $testAdUser[0].Company
@@ -1587,7 +1587,8 @@ Describe 'when the script runs after a snapshot was created' {
                     $actualRow = $actual | Where-Object {
                         $_.Status -eq $testRow.Status
                     }
-                    $actualRow.SamAccountName | Should -Be $testRow.SamAccountName
+                    $actualRow.SamAccountName | 
+                    Should -Be $testRow.SamAccountName
                     $actualRow.AccountExpirationDate.ToString('yyyyMMdd HHmm') | 
                     Should -Be $testRow.AccountExpirationDate.ToString('yyyyMMdd HHmm')
                     $actualRow.DisplayName | Should -Be $testRow.DisplayName

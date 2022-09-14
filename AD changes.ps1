@@ -425,7 +425,7 @@ Process {
                         Expression = { 'REMOVED' }
                     }, 
                     @{
-                        Name       = 'Updated'
+                        Name       = 'UpdatedFields'
                         Expression = { $null }
                     }
                     #endregion
@@ -445,7 +445,7 @@ Process {
                         Expression = { 'ADDED' }
                     },
                     @{
-                        Name       = 'Updated'
+                        Name       = 'UpdatedFields'
                         Expression = { $null }
                     }
                     #endregion
@@ -485,7 +485,7 @@ Process {
                     Name       = 'Status'
                     Expression = { 'BEFORE_UPDATE' }
                 }, @{
-                    Name       = 'Updated'
+                    Name       = 'UpdatedFields'
                     Expression = { $propertiesUpdated }
                 }
 
@@ -494,7 +494,7 @@ Process {
                     Name       = 'Status'
                     Expression = { 'AFTER_UPDATE' }
                 }, @{
-                    Name       = 'Updated'
+                    Name       = 'UpdatedFields'
                     Expression = { $propertiesUpdated }
                 }
             }
@@ -525,9 +525,9 @@ Process {
             Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
             $differencesAdUsers | Select-Object -Property *, @{
-                Name       = 'Updated'
+                Name       = 'UpdatedFields'
                 Expression = { $_.Updated -join ', ' }
-            } -ExcludeProperty 'Updated' | 
+            } -ExcludeProperty 'UpdatedFields' | 
             Export-Excel @excelDifferencesParams
         }
         #endregion
