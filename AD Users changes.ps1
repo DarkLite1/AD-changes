@@ -401,7 +401,7 @@ Process {
 
         #region Get previously exported AD users
         $M = "Get previously exported AD users from the latest Excel file in folder '{0}'" -f $logParams.LogFolder
-        Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
+        Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
         $params = @{
             LiteralPath = $logParams.LogFolder
