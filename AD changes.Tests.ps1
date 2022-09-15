@@ -1944,8 +1944,7 @@ Describe 'export only the requested AD properties' {
         }
     }
 }
-
-Describe 'send a mail to the user when' {
+Describe 'send a mail to the user when SendMai.When is Always when' {
     BeforeAll {
         $testAdUser = @(
             [PSCustomObject]@{
@@ -2007,7 +2006,38 @@ Describe 'send a mail to the user when' {
 
         .$testScript @testParams
     }
-    Context 'SendMail.When is Always and changes are detected' {
+    Context 'no changes are detected' {
+        BeforeAll {
+            .$testScript @testParams
+
+            $testMail = @{
+                To          = $testJsonFile.SendMail.To
+                Bcc         = $ScriptAdmin
+                Priority    = 'Normal'
+                Subject     = 'No changes detected'
+                Message     = "*<p>AD user accounts:*"
+            }
+        }
+        It 'Send-MailHC has the correct arguments' {
+            $mailParams.To | Should -Be $testMail.To
+            $mailParams.Bcc | Should -Be $testMail.Bcc
+            $mailParams.Priority | Should -Be $testMail.Priority
+            $mailParams.Subject | Should -Be $testMail.Subject
+            $mailParams.Message | Should -BeLike $testMail.Message
+            $mailParams.Attachments | Should -BeNullOrEmpty
+        }
+        It 'Send-MailHC is called' {
+            Should -Invoke Send-MailHC -Exactly 1 -Scope Describe -ParameterFilter {
+            ($To -eq $testMail.To) -and
+            ($Bcc -eq $testMail.Bcc) -and
+            ($Priority -eq $testMail.Priority) -and
+            ($Subject -eq $testMail.Subject) -and
+            (-not $Attachments) -and
+            ($Message -like $testMail.Message)
+            }
+        }
+    }
+    Context 'changes are detected' {
         BeforeAll {
             $testAdUser[0].Description = 'changed description'
             $testAdUser[0].Title = 'changed title'
@@ -2044,5 +2074,5 @@ Describe 'send a mail to the user when' {
             ($Message -like $testMail.Message)
             }
         }
-    } -Tag test
+    }
 }
