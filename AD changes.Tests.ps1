@@ -1640,37 +1640,6 @@ Describe 'when the script runs after a snapshot was created' {
             }
         }
     }
-    
-    Context 'send a mail to the user when SendMail.When is Always' {
-        BeforeAll {
-            $testMail = @{
-                To          = 'bob@contoso.com'
-                Bcc         = $ScriptAdmin
-                Priority    = 'Normal'
-                Subject     = '3 files found'
-                Message     = "*Found a total of <b>3 files</b>*$env:COMPUTERNAME*$testFolderPath*Filter*Files found**kiwi*3*Check the attachment for details*"
-                Attachments = '* - 0 - Log.xlsx'
-            }
-        }
-        It 'Send-MailHC has the correct arguments' {
-            $mailParams.To | Should -Be $testMail.To
-            $mailParams.Bcc | Should -Be $testMail.Bcc
-            $mailParams.Priority | Should -Be $testMail.Priority
-            $mailParams.Subject | Should -Be $testMail.Subject
-            $mailParams.Message | Should -BeLike $testMail.Message
-            $mailParams.Attachments | Should -BeLike $testMail.Attachments
-        }
-        It 'Send-MailHC is called' {
-            Should -Invoke Send-MailHC -Exactly 1 -Scope Describe -ParameterFilter {
-                ($To -eq $testMail.To) -and
-                ($Bcc -eq $testMail.Bcc) -and
-                ($Priority -eq $testMail.Priority) -and
-                ($Subject -eq $testMail.Subject) -and
-                ($Attachments -like $testMail.Attachments) -and
-                ($Message -like $testMail.Message)
-            }
-        }
-    } -Skip
 }
 Describe 'monitor only the requested AD properties' {
     BeforeAll {
@@ -1974,4 +1943,106 @@ Describe 'export only the requested AD properties' {
             }
         }
     }
+}
+
+Describe 'send a mail to the user when' {
+    BeforeAll {
+        $testAdUser = @(
+            [PSCustomObject]@{
+                AccountExpirationDate = (Get-Date).AddYears(1)
+                CanonicalName         = 'OU=Texas,OU=USA,DC=contoso,DC=net'
+                Co                    = 'USA'
+                Company               = 'US Government'
+                Department            = 'Texas rangers'
+                Description           = 'Ranger'
+                DisplayName           = 'Chuck Norris'
+                DistinguishedName     = 'dis chuck'
+                EmailAddress          = 'gmail@chuck.norris'
+                EmployeeID            = '1'
+                EmployeeType          = 'Special'
+                Enabled               = $true
+                ExtensionAttribute8   = '3'
+                Fax                   = '2'
+                GivenName             = 'Chuck'
+                HomePhone             = '4'
+                HomeDirectory         = 'c:\chuck'
+                Info                  = "best`nguy`never"
+                IpPhone               = '5'
+                Surname               = 'Norris'
+                LastLogonDate         = (Get-Date)
+                LockedOut             = $false
+                Manager               = 'President'
+                MobilePhone           = '6'
+                Name                  = 'Chuck Norris'
+                Office                = 'Texas'
+                OfficePhone           = '7'
+                Pager                 = '9'
+                PasswordExpired       = $false
+                PasswordNeverExpires  = $true
+                SamAccountName        = 'cnorris'
+                ScriptPath            = 'c:\cnorris\script.ps1'
+                Title                 = 'Texas lead ranger'
+                UserPrincipalName     = 'norris@world'
+                WhenChanged           = (Get-Date).AddDays(-5)
+                WhenCreated           = (Get-Date).AddYears(-3)
+            }
+        )
+        
+        Mock Get-ADUser {
+            $testAdUser
+        }
+
+        $testJsonFile = @{
+            AD       = @{
+                PropertyToMonitor = @('Description', 'Title')
+                PropertyInReport  = @('Office')
+                OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+            }
+            SendMail = @{
+                When = 'Always'
+                To   = 'bob@contoso.com'
+            }
+        }
+        $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+
+        .$testScript @testParams
+    }
+    Context 'SendMail.When is Always and changes are detected' {
+        BeforeAll {
+            $testAdUser[0].Description = 'changed description'
+            $testAdUser[0].Title = 'changed title'
+
+            Mock Get-ADUser {
+                $testAdUser
+            }
+
+            .$testScript @testParams
+            $testMail = @{
+                To          = $testJsonFile.SendMail.To
+                Bcc         = $ScriptAdmin
+                Priority    = 'Normal'
+                Subject     = '0 added, 1 updated, 0 removed'
+                Message     = "*<p>AD user accounts:</p>*Check the attachment for details*"
+                Attachments = '* - Differences{*}.xlsx'
+            }
+        }
+        It 'Send-MailHC has the correct arguments' {
+            $mailParams.To | Should -Be $testMail.To
+            $mailParams.Bcc | Should -Be $testMail.Bcc
+            $mailParams.Priority | Should -Be $testMail.Priority
+            $mailParams.Subject | Should -Be $testMail.Subject
+            $mailParams.Message | Should -BeLike $testMail.Message
+            $mailParams.Attachments | Should -BeLike $testMail.Attachments
+        }
+        It 'Send-MailHC is called' {
+            Should -Invoke Send-MailHC -Exactly 1 -Scope Describe -ParameterFilter {
+            ($To -eq $testMail.To) -and
+            ($Bcc -eq $testMail.Bcc) -and
+            ($Priority -eq $testMail.Priority) -and
+            ($Subject -eq $testMail.Subject) -and
+            ($Attachments -like $testMail.Attachments) -and
+            ($Message -like $testMail.Message)
+            }
+        }
+    } -Tag test
 }

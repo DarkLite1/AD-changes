@@ -313,6 +313,15 @@ Begin {
                 #endregion
             }
             #endregion
+
+            $mailParams = @{
+                To        = $mailTo
+                Bcc       = $ScriptAdmin
+                Priority  = 'Normal'
+                LogFolder = $logParams.LogFolder
+                Header    = $ScriptName 
+                Save      = New-LogFileNameHC @logParams -Name "$ScriptName - Mail.html"
+            }
         }
         catch {
             throw "Failed to import file '$ImportFile': $_"
@@ -358,7 +367,7 @@ Process {
 
         #region Export all AD users to Excel file
         $excelParams = @{
-            Path          = New-LogFileNameHC @LogParams -Name "$ScriptName - State.xlsx"
+            Path          = New-LogFileNameHC @logParams -Name "$ScriptName - State.xlsx"
             WorksheetName = 'AllUsers'
             TableName     = 'AllUsers'
             AutoSize      = $true
@@ -564,8 +573,95 @@ Process {
             }
             $differencesAdUsers | Select-Object @selectParams | 
             Export-Excel @excelDifferencesParams
+
+            $mailParams.Attachments = $excelDifferencesParams.Path
         }
         #endregion
+    }
+    Catch {
+        Write-Warning $_
+        Send-MailHC -To $ScriptAdmin -Subject 'FAILURE' -Priority 'High' -Message $_ -Header $ScriptName
+        Write-EventLog @EventErrorParams -Message "FAILURE:`n`n- $_"
+        Write-EventLog @EventEndParams; Exit 1
+    }
+}
+End {
+    Try {
+        if (($mailWhen -eq 'Always') -or ($differencesAdUsers)) {
+            $counter = @{
+                currentUsers  = $currentAdUsers.Count
+                previousUsers = $previousAdUsers.Count
+                updatedUsers  = $differencesAdUsers.Where(
+                    { $_.Status -eq 'AFTER_UPDATE' }).Count
+                removedUsers  = $differencesAdUsers.Where(
+                    { $_.Status -eq 'REMOVED' }).Count
+                addedUsers    = $differencesAdUsers.Where(
+                    { $_.Status -eq 'ADDED' }).Count
+            }
+
+            #region Subject and Priority
+            $mailParams.Subject = if (
+                (
+                    $counter.updatedUsers + 
+                    $counter.removedUsers + 
+                    $counter.addedUsers
+                ) -eq 0
+            ) {
+                'No changes detected'
+            }
+            else {
+                '{0} added, {1} updated, {2} removed' -f $counter.addedUsers,
+                $counter.updatedUsers, $counter.removedUsers
+            }
+            #endregion
+
+            #region Send mail
+            $htmlTable = "
+            <table>
+                <tr>
+                    <th>Currently ({0})</th>
+                    <td>{1}</td>
+                </tr>
+                <tr>
+                    <th>Previously ({2})</th>
+                    <td>{3}</td>
+                </tr>
+                <tr>
+                    <th>Added</th>
+                    <td>{4}</td>
+                </tr>
+                <tr>
+                    <th>Updated</th>
+                    <td>{5}</td>
+                </tr>
+                <tr>
+                    <th>Removed</th>
+                    <td>{6}</td>
+                </tr>
+            </table>" -f 
+            $now.ToString('dd/MM/yyyy HH:mm'), $counter.currentUsers, 
+            $lastExcelFile.CreationTime.ToString('dd/MM/yyyy HH:mm'), 
+            $counter.previousUsers, $counter.addedUsers, $counter.updatedUsers, 
+            $counter.removedUsers
+
+            $mailParams.Message = "
+            $errorMessage
+            <p>AD user accounts:</p>
+            $htmlTable
+            {0}" -f $(
+                if ($mailParams.Attachments) {
+                    '<p><i>* Check the attachment for details</i></p>'
+                }
+            )
+            
+            $M = "Send mail`r`n- Header:`t{0}`r`n- To:`t`t{1}`r`n- Subject:`t{2}" -f 
+            $mailParams.Header, $($mailParams.To -join ','), $mailParams.Subject
+            Write-Verbose $M
+            
+            Get-ScriptRuntimeHC -Stop
+            Send-MailHC @mailParams
+            #endregion
+        }
     }
     Catch {
         Write-Warning $_
