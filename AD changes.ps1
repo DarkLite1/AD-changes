@@ -598,9 +598,7 @@ End {
                     { $_.Status -eq 'REMOVED' }).Count
                 addedUsers    = $differencesAdUsers.Where(
                     { $_.Status -eq 'ADDED' }).Count
-                errors        = (
-                    $Error.Exception.Message | Measure-Object
-                ).Count
+                errors        = $Error.Count
             }
 
             #region Subject and Priority
