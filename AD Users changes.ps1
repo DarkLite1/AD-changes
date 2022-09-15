@@ -468,7 +468,7 @@ Process {
                     #region User no longer in AD
                     $M = "User '{0}' removed from AD" -f $d.SamAccountName
                     Write-Verbose $M
-                    Write-EventLog @EventVerboseParams -Message $M
+                    Write-EventLog @EventOutParams -Message $M
 
                     $previousAdUsers.Where(
                         { $_.SamAccountName -eq $d.SamAccountName },
@@ -488,7 +488,7 @@ Process {
                     #region New user
                     $M = "User '{0}' added to AD" -f $d.SamAccountName
                     Write-Verbose $M
-                    Write-EventLog @EventVerboseParams -Message $M
+                    Write-EventLog @EventOutParams -Message $M
 
                     $currentAdUsers.Where(
                         { $_.SamAccountName -eq $d.SamAccountName },
@@ -524,7 +524,7 @@ Process {
                     $currentAdUser.SamAccountName, $p,
                     $previousAdUser.$p, $currentAdUser.$p
                     Write-Verbose $M
-                    Write-EventLog @EventVerboseParams -Message $M
+                    Write-EventLog @EventOutParams -Message $M
 
                     $propertiesUpdated += $p
                 }
