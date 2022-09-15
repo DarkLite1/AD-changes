@@ -409,7 +409,8 @@ Process {
             File        = $true
         }
         $lastExcelFile = Get-ChildItem @params | Where-Object {
-            $_.CreationTime -lt $now
+            ($_.CreationTime -lt $now) -and
+            ($_.FullName -ne $excelParams.Path)
         } | Sort-Object 'CreationTime' | Select-Object -Last 1
 
         if (-not $lastExcelFile) {

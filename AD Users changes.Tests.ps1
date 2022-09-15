@@ -20,7 +20,6 @@ BeforeAll {
     Mock Send-MailHC
     Mock Write-EventLog
 }
-
 Describe 'the mandatory parameters are' {
     It '<_>' -ForEach 'ScriptName', 'ImportFile' {
         (Get-Command $testScript).Parameters[$_].Attributes.Mandatory | 
@@ -1985,10 +1984,48 @@ Describe 'send a mail with SendMail.When set to Always when' {
                 WhenChanged           = (Get-Date).AddDays(-5)
                 WhenCreated           = (Get-Date).AddYears(-3)
             }
+            [PSCustomObject]@{
+                AccountExpirationDate = (Get-Date).AddYears(2)
+                CanonicalName         = 'OU=Tennessee,OU=USA,DC=contoso,DC=net'
+                Co                    = 'America'
+                Company               = 'Retired'
+                Department            = 'US Army snipers'
+                Description           = 'Sniper'
+                DisplayName           = 'Bob Lee Swagger'
+                DistinguishedName     = 'dis bob'
+                EmailAddress          = 'bl@tenessee.com'
+                EmployeeID            = '9'
+                EmployeeType          = 'Sniper'
+                Enabled               = $true
+                ExtensionAttribute8   = '11'
+                Fax                   = '10'
+                GivenName             = 'Bob Lee'
+                HomePhone             = '12'
+                HomeDirectory         = 'c:\swagger'
+                Info                  = "best`nsniper`nin`nthe`nworld"
+                IpPhone               = '13'
+                Surname               = 'Swagger'
+                LastLogonDate         = (Get-Date)
+                LockedOut             = $false
+                Manager               = 'US President'
+                MobilePhone           = '14'
+                Name                  = 'Bob Lee Swagger'
+                Office                = 'Tennessee'
+                OfficePhone           = '15'
+                Pager                 = '16'
+                PasswordExpired       = $false
+                PasswordNeverExpires  = $true
+                SamAccountName        = 'lswagger'
+                ScriptPath            = 'c:\swagger\script.ps1'
+                Title                 = 'Corporal'
+                UserPrincipalName     = 'swagger@world'
+                WhenChanged           = (Get-Date).AddDays(-7)
+                WhenCreated           = (Get-Date).AddYears(-30)
+            }
         )
         
         Mock Get-ADUser {
-            $testAdUser
+            $testAdUser[0]
         }
 
         $testJsonFile = @{
@@ -2039,19 +2076,20 @@ Describe 'send a mail with SendMail.When set to Always when' {
     }
     Context 'changes are detected' {
         BeforeAll {
-            $testAdUser[0].Description = 'changed description'
-            $testAdUser[0].Title = 'changed title'
-
             Mock Get-ADUser {
-                $testAdUser
+                $testAdUser[0..1]
             }
 
             .$testScript @testParams
+            
+            $currentAdUsers | Should -HaveCount 2
+            $previousAdUsers | Should -HaveCount 1
+
             $testMail = @{
                 To          = $testJsonFile.SendMail.To
                 Bcc         = $ScriptAdmin
                 Priority    = 'Normal'
-                Subject     = '0 added, 1 updated, 0 removed'
+                Subject     = '1 added, 0 updated, 0 removed'
                 Message     = "*<p>AD user accounts:</p>*Check the attachment for details*"
                 Attachments = '* - Differences{*}.xlsx'
             }
@@ -2117,10 +2155,48 @@ Describe 'with SendMail.When set to OnlyWhenChangesAreFound' {
                 WhenChanged           = (Get-Date).AddDays(-5)
                 WhenCreated           = (Get-Date).AddYears(-3)
             }
+            [PSCustomObject]@{
+                AccountExpirationDate = (Get-Date).AddYears(2)
+                CanonicalName         = 'OU=Tennessee,OU=USA,DC=contoso,DC=net'
+                Co                    = 'America'
+                Company               = 'Retired'
+                Department            = 'US Army snipers'
+                Description           = 'Sniper'
+                DisplayName           = 'Bob Lee Swagger'
+                DistinguishedName     = 'dis bob'
+                EmailAddress          = 'bl@tenessee.com'
+                EmployeeID            = '9'
+                EmployeeType          = 'Sniper'
+                Enabled               = $true
+                ExtensionAttribute8   = '11'
+                Fax                   = '10'
+                GivenName             = 'Bob Lee'
+                HomePhone             = '12'
+                HomeDirectory         = 'c:\swagger'
+                Info                  = "best`nsniper`nin`nthe`nworld"
+                IpPhone               = '13'
+                Surname               = 'Swagger'
+                LastLogonDate         = (Get-Date)
+                LockedOut             = $false
+                Manager               = 'US President'
+                MobilePhone           = '14'
+                Name                  = 'Bob Lee Swagger'
+                Office                = 'Tennessee'
+                OfficePhone           = '15'
+                Pager                 = '16'
+                PasswordExpired       = $false
+                PasswordNeverExpires  = $true
+                SamAccountName        = 'lswagger'
+                ScriptPath            = 'c:\swagger\script.ps1'
+                Title                 = 'Corporal'
+                UserPrincipalName     = 'swagger@world'
+                WhenChanged           = (Get-Date).AddDays(-7)
+                WhenCreated           = (Get-Date).AddYears(-30)
+            }
         )
         
         Mock Get-ADUser {
-            $testAdUser
+            $testAdUser[0]
         }
 
         $testJsonFile = @{
@@ -2148,19 +2224,17 @@ Describe 'with SendMail.When set to OnlyWhenChangesAreFound' {
     }
     Context 'send a mail when there are changes' {
         BeforeAll {
-            $testAdUser[0].Description = 'changed description'
-            $testAdUser[0].Title = 'changed title'
-
             Mock Get-ADUser {
-                $testAdUser
+                $testAdUser[0..1]
             }
 
             .$testScript @testParams
+
             $testMail = @{
                 To          = $testJsonFile.SendMail.To
                 Bcc         = $ScriptAdmin
                 Priority    = 'Normal'
-                Subject     = '0 added, 1 updated, 0 removed'
+                Subject     = '1 added, 0 updated, 0 removed'
                 Message     = "*<p>AD user accounts:</p>*Check the attachment for details*"
                 Attachments = '* - Differences{*}.xlsx'
             }
