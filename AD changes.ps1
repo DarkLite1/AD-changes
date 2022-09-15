@@ -16,8 +16,12 @@
         the differences in a second Excel file.
         - Ex. 2022-09-31 1030 - Differences{0}.xlsx
 
-        All required parameters for this script are ready from a .JSON file
+        All required parameters for the script are ready from a .JSON file
         defined in '$ImportFile'.
+
+        This script is intended to be executed as a scheduled task on a daily 
+        or weekly basis. It wil then generate 'Differences{0}.xlsx' files when
+        they occur.
 
     .PARAMETER ImportFile
         Contains all the required parameters to run the script. These parameters
