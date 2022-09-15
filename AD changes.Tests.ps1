@@ -1944,7 +1944,7 @@ Describe 'export only the requested AD properties' {
         }
     }
 }
-Describe 'send a mail to the user when SendMai.When is Always when' {
+Describe 'send a mail with SendMai.When set to Always when' {
     BeforeAll {
         $testAdUser = @(
             [PSCustomObject]@{
