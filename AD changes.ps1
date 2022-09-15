@@ -4,29 +4,40 @@
 
 <#
     .SYNOPSIS
-        Monitor changes in AD and send an e-mail when changes have been found.
+        Monitor changes on AD user accounts and send an e-mail with a report.
 
     .DESCRIPTION
         When the script runs it always creates a single Excel file containing 
         all the active directory user accounts with their current state.
-        - Ex. 2022-09-31 AD State.xlsx
+        - Ex. 2022-09-31 1030 - State{0}.xlsx
 
         The second step for the script is to compare the latest Excel file 
         (not the one from today) with the current AD user accounts and report
         the differences in a second Excel file.
-        - Ex. 2022-09-31 AD Changes.xlsx
+        - Ex. 2022-09-31 1030 - Differences{0}.xlsx
 
-    .PARAMETER OU
-        Collection of organizational units in AD where to search for user 
-        accounts.
+        All required parameters for this script are ready from a .JSON file
+        defined in '$ImportFile'.
+
+    .PARAMETER ImportFile
+        Contains all the required parameters to run the script. These parameters
+        are explained below and an example can be found in file 'Example.json'.
+
+    .PARAMETER AD.OU
+        Collection of organizational units in active directory where to search 
+        for user accounts.
 
     .PARAMETER AD.PropertyToMonitor
-        Collection of AD fields where to look for changes. All other fields are 
-        disregarded. The wildcard '*' is also supported.
+        Collection of active directory fields where to look for changes. All 
+        other fields are disregarded.
+        
+        Wildcard '*' is supported and will monitor all active directory fields.
 
     .PARAMETER AD.PropertyInReport
-        Collection of AD fields to export to the Excel file where the changes
-        are reported. The wildcard '*' is also supported.
+        Collection of active directory fields to export to the Excel file 
+        'Differences{0}.xlsx' where the changes are stored.
+        
+        Wildcard '*' is supported and will report all active directory fields.
 
     .PARAMETER SendMail.Header
         The header to use in the e-mail sent to the end user.
@@ -35,9 +46,9 @@
         List of e-mail addresses where to send the e-mail too.
 
     .PARAMETER SendMail.When
-        When an e-mail will be sent to the end user.
+        Determines when an e-mail is sent to the end user.
         Valid options:
-        - OnlyWhenChangesAreFound : when no changes are found not e-mail is sent
+        - OnlyWhenChangesAreFound : when no changes are found no e-mail is sent
         - Always                  : always sent an e-mail, even when no changes 
                                     are found
 #>
