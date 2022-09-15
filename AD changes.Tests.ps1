@@ -1944,7 +1944,7 @@ Describe 'export only the requested AD properties' {
         }
     }
 }
-Describe 'send a mail with SendMai.When set to Always when' {
+Describe 'send a mail with SendMail.When set to Always when' {
     BeforeAll {
         $testAdUser = @(
             [PSCustomObject]@{
@@ -2076,7 +2076,7 @@ Describe 'send a mail with SendMai.When set to Always when' {
         }
     }
 }
-Describe 'with SendMai.When set to OnlyWhenChangesAreFound' {
+Describe 'with SendMail.When set to OnlyWhenChangesAreFound' {
     BeforeAll {
         $testAdUser = @(
             [PSCustomObject]@{
