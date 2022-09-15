@@ -56,6 +56,7 @@ Begin {
         $now = Get-ScriptRuntimeHC -Start
         Import-EventLogParamsHC -Source $ScriptName
         Write-EventLog @EventStartParams
+        $Error.Clear()
 
         #region Logging
         try {
@@ -597,6 +598,9 @@ End {
                     { $_.Status -eq 'REMOVED' }).Count
                 addedUsers    = $differencesAdUsers.Where(
                     { $_.Status -eq 'ADDED' }).Count
+                errors        = (
+                    $Error.Exception.Message | Measure-Object
+                ).Count
             }
 
             #region Subject and Priority
@@ -612,6 +616,26 @@ End {
             else {
                 '{0} added, {1} updated, {2} removed' -f $counter.addedUsers,
                 $counter.updatedUsers, $counter.removedUsers
+            }
+
+            if ($counter.errors) {
+                $mailParams.Priority = 'High'
+                $mailParams.Subject += ', {0} error{1}' -f $counter.errors, $(
+                    if ($counter.errors -ne 1) { 's' }
+                )
+            }
+            #endregion
+
+            #region Create html lists
+            $htmlErrorList = if ($counter.errors) {
+                "<p>Detected <b>{0} non terminating error{1}</b>:{2}</p>" -f $counter.errors, 
+                $(
+                    if ($counter.errors -ne 1) { 's' }
+                ),
+                $(
+                    $Error.Exception.Message | Where-Object { $_ } | 
+                    ConvertTo-HtmlListHC
+                )
             }
             #endregion
 
@@ -645,7 +669,7 @@ End {
             $counter.removedUsers
 
             $mailParams.Message = "
-            $errorMessage
+            $htmlErrorList
             <p>AD user accounts:</p>
             $htmlTable
             {0}" -f $(
