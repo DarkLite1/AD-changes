@@ -346,6 +346,36 @@ Begin {
 }
 Process {
     Try {
+        #region Get previously exported AD users
+        $M = "Get previously exported AD users from the latest Excel file in folder '{0}'" -f $logParams.LogFolder
+        Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+
+        $params = @{
+            LiteralPath = $logParams.LogFolder
+            Filter      = '* - State{*}.xlsx'
+            File        = $true
+        }
+        $lastExcelFile = Get-ChildItem @params | Where-Object {
+            $_.CreationTime -lt $now
+        } | Sort-Object 'CreationTime' | Select-Object -Last 1
+
+        $previousAdUsers = @()
+
+        if ($lastExcelFile) {
+            $params = @{
+                Path          = $lastExcelFile.FullName
+                ErrorAction   = 'Stop'
+            }
+            $previousAdUsers += Import-Excel @params
+
+            $M = "Found {0} AD user account{1} in Excel file '{2}'" -f 
+            $previousAdUsers.Count, 
+            $(if ($previousAdUsers.Count -ne 1) { 's' }),
+            $lastExcelFile.FullName
+            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+        }
+        #endregion
+
         #region Get current AD users
         [Array]$currentAdUsers = foreach ($ou in $adOU) {
             $M = "Get user accounts in OU '$ou'"
@@ -375,7 +405,7 @@ Process {
         }
         #endregion
 
-        #region Export all AD users to Excel file
+        #region Export current AD users to Excel file
         $excelParams = @{
             Path          = New-LogFileNameHC @logParams -Name "$ScriptName - State.xlsx"
             WorksheetName = 'AllUsers'
@@ -393,42 +423,11 @@ Process {
         $currentAdUsers | Export-Excel @excelParams
         #endregion
 
-        #region Get previously exported AD users
-        $M = "Get previously exported AD users from the latest Excel file in folder '{0}'" -f $logParams.LogFolder
-        Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-
-        $params = @{
-            LiteralPath = $logParams.LogFolder
-            Filter      = '* - State{*}.xlsx'
-            File        = $true
-        }
-        $lastExcelFile = Get-ChildItem @params | Where-Object {
-            ($_.CreationTime -lt $now) -and
-            ($_.FullName -ne $excelParams.Path)
-        } | Sort-Object 'CreationTime' | Select-Object -Last 1
-
-        if (-not $lastExcelFile) {
+        if (-not $previousAdUsers) {
             $M = 'No comparison possible because there is no previously exported Excel file with AD user accounts yet. The next run will not have this issue because a snapshot of the current AD users has just been created and exported to Excel. This file will then be used for comparison on the next run.'
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             Write-EventLog @EventEndParams; Exit
         }
-        
-        $params = @{
-            Path          = $lastExcelFile.FullName
-            WorksheetName = $excelParams.WorksheetName
-            ErrorAction   = 'Stop'
-        }
-        [Array]$previousAdUsers = Import-Excel @params
-
-        $M = "Found {0} AD user account{1} in Excel file '{2}'" -f 
-        $previousAdUsers.Count, $(if ($previousAdUsers.Count -ne 1) { 's' }),
-        $lastExcelFile.FullName
-        Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-
-        if (-not $previousAdUsers) {
-            throw 'No previously exported AD user accounts found'
-        }
-        #endregion
 
         #region Compare AD
         #region Import current AD users again for comparing equality
