@@ -575,7 +575,7 @@ Process {
             Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
             #endregion
 
-            #region Order properties for Excel differences file
+            #region Order properties
             $selectParams = @{
                 Property        = (
                     @(
