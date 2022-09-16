@@ -671,11 +671,11 @@ End {
             $htmlTable = "
             <table>
                 <tr>
-                    <th>Currently ({0})</th>
+                    <th>{0}</th>
                     <td>{1}</td>
                 </tr>
                 <tr>
-                    <th>Previously ({2})</th>
+                    <th>{2}</th>
                     <td>{3}</td>
                 </tr>
                 <tr>
