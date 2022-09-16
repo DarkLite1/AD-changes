@@ -536,7 +536,7 @@ Process {
                 ) | 
                 Select-Object -Property *, @{
                     Name       = 'Status'
-                    Expression = { 'BEFORE_UPDATE' }
+                    Expression = { 'UPDATED_BEFORE' }
                 }, @{
                     Name       = 'UpdatedFields'
                     Expression = { $propertiesUpdated }
@@ -545,7 +545,7 @@ Process {
                 $currentAdUser | 
                 Select-Object -Property *, @{
                     Name       = 'Status'
-                    Expression = { 'AFTER_UPDATE' }
+                    Expression = { 'UPDATED_AFTER' }
                 }, @{
                     Name       = 'UpdatedFields'
                     Expression = { $propertiesUpdated }
@@ -622,7 +622,7 @@ End {
                 currentUsers  = $currentAdUsers.Count
                 previousUsers = $previousAdUsers.Count
                 updatedUsers  = $differencesAdUsers.Where(
-                    { $_.Status -eq 'AFTER_UPDATE' }).Count
+                    { $_.Status -eq 'UPDATED_AFTER' }).Count
                 removedUsers  = $differencesAdUsers.Where(
                     { $_.Status -eq 'REMOVED' }).Count
                 addedUsers    = $differencesAdUsers.Where(

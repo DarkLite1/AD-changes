@@ -1484,7 +1484,7 @@ Describe 'when the script runs after a snapshot was created' {
             BeforeAll {
                 $testExportedExcelRows = @(
                     @{
-                        Status                    = 'AFTER_UPDATE'
+                        Status                    = 'UPDATED_AFTER'
                         UpdatedFields             = 'Description, Title'
                         AccountExpirationDate     = $testAdUser[0].AccountExpirationDate
                         Country                   = $testAdUser[0].Co
@@ -1527,7 +1527,7 @@ Describe 'when the script runs after a snapshot was created' {
                         WhenCreated               = $testAdUser[0].WhenCreated
                     }
                     @{
-                        Status                    = 'BEFORE_UPDATE'
+                        Status                    = 'UPDATED_BEFORE'
                         UpdatedFields             = 'Description, Title'
                         AccountExpirationDate     = $testAdUser[0].AccountExpirationDate
                         Country                   = $testAdUser[0].Co
@@ -1757,7 +1757,7 @@ Describe 'monitor only the requested AD properties' {
 
             $testExportedExcelRows = @(
                 @{
-                    Status         = 'AFTER_UPDATE'
+                    Status         = 'UPDATED_AFTER'
                     UpdatedFields  = 'Description'
                     Description    = $testAdUser[0].Description
                     Office         = $testAdUser[0].Office
@@ -1765,7 +1765,7 @@ Describe 'monitor only the requested AD properties' {
                     Title          = $testAdUser[0].Title
                 }
                 @{
-                    Status         = 'BEFORE_UPDATE'
+                    Status         = 'UPDATED_BEFORE'
                     UpdatedFields  = 'Description'
                     Description    = $testOriginalValue.Description
                     Office         = $testAdUser[0].Office
@@ -1890,7 +1890,7 @@ Describe 'export only the requested AD properties' {
 
             $testExportedExcelRows = @(
                 @{
-                    Status         = 'AFTER_UPDATE'
+                    Status         = 'UPDATED_AFTER'
                     UpdatedFields  = 'Description, Title'
                     Description    = $testAdUser[0].Description
                     Office         = $testAdUser[0].Office
@@ -1898,7 +1898,7 @@ Describe 'export only the requested AD properties' {
                     Title          = $testAdUser[0].Title
                 }
                 @{
-                    Status         = 'BEFORE_UPDATE'
+                    Status         = 'UPDATED_BEFORE'
                     UpdatedFields  = 'Description, Title'
                     Description    = $testOriginalValue.Description
                     Office         = $testAdUser[0].Office
