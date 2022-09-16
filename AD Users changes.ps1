@@ -62,7 +62,7 @@ Param (
     [String]$ScriptName,
     [Parameter(Mandatory)]
     [String]$ImportFile,
-    [String]$LogFolder = "$env:POWERSHELL_LOG_FOLDER\AD Reports\AD changes\$ScriptName",
+    [String]$LogFolder = "$env:POWERSHELL_LOG_FOLDER\AD Reports\AD Users changes\$ScriptName",
     [String[]]$ScriptAdmin = $env:POWERSHELL_SCRIPT_ADMIN
 )
 
