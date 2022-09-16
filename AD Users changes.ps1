@@ -89,35 +89,6 @@ Begin {
         #endregion
 
         try {
-            #region Import .json file
-            $M = "Import .json file '$ImportFile'"
-            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-
-            $file = Get-Content $ImportFile -Raw -EA Stop | ConvertFrom-Json
-            #endregion
-
-            #region Test .json file
-            if (-not ([array]$adPropertyToMonitor = $file.AD.PropertyToMonitor)) {
-                throw "Property 'AD.PropertyToMonitor' not found."
-            }
-            if (-not ([array]$adPropertyInReport = $file.AD.PropertyInReport)) {
-                throw "Property 'AD.PropertyInReport' not found."
-            }
-            if (-not ($adOU = $file.AD.OU)) {
-                throw "Property 'AD.OU' not found."
-            }
-            if (-not ($mailTo = $file.SendMail.To)) {
-                throw "Property 'SendMail.To' not found."
-            }
-            if (-not ($mailWhen = $file.SendMail.When)) {
-                throw "Property 'SendMail.When' not found."
-            }
-            if (
-                $mailWhen -notMatch '^Always$|^OnlyWhenChangesAreFound$'
-            ) {
-                throw "The value '$mailWhen' in 'SendMail.When' is not supported. Only the value 'Always' or 'OnlyWhenChangesAreFound' can be used."
-            }
-
             $adProperties = @(
                 @{
                     Name       = 'AccountExpirationDate'
@@ -288,36 +259,63 @@ Begin {
                     Expression = { $_.WhenCreated } 
                 }
             )
+
+            #region Import .json file
+            $M = "Import .json file '$ImportFile'"
+            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+
+            $file = Get-Content $ImportFile -Raw -EA Stop | ConvertFrom-Json
+            #endregion
+
+            #region Test .json file
+            if (-not ([array]$adPropertyToMonitor = $file.AD.PropertyToMonitor)) {
+                throw "Property 'AD.PropertyToMonitor' not found."
+            }
+            if ($adPropertyToMonitor -ne '*') {
+                $adPropertyToMonitor | Where-Object { 
+                    $adProperties.Name -notContains $_ 
+                } | ForEach-Object {
+                    throw "Property '$_' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
+                }
+            }
+            if (-not ([array]$adPropertyInReport = $file.AD.PropertyInReport)) {
+                throw "Property 'AD.PropertyInReport' not found."
+            }
+            if ($adPropertyInReport -ne '*') {
+                $adPropertyInReport | Where-Object { 
+                    $adProperties.Name -notContains $_ 
+                } | ForEach-Object {
+                    throw "Property '$_' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
+                }
+            }
+            if (-not ($adOU = $file.AD.OU)) {
+                throw "Property 'AD.OU' not found."
+            }
+            if (-not ($mailTo = $file.SendMail.To)) {
+                throw "Property 'SendMail.To' not found."
+            }
+            if (-not ($mailWhen = $file.SendMail.When)) {
+                throw "Property 'SendMail.When' not found."
+            }
+            if (
+                $mailWhen -notMatch '^Always$|^OnlyWhenChangesAreFound$'
+            ) {
+                throw "The value '$mailWhen' in 'SendMail.When' is not supported. Only the value 'Always' or 'OnlyWhenChangesAreFound' can be used."
+            }
+            #endregion
+
+            #region Update properties to monitor
             if ($adPropertyToMonitor -eq '*') {
-                Write-Verbose 'All properties will be monitored'
                 $adPropertyToMonitor = $adProperties.Name | Where-Object {
                     @(
                         'WhenChanged', 'WhenCreated', 'LastLogonDate'
                     ) -notContains $_
                 }
             }
-            else {
-                #region Test for valid AD properties
-                $adPropertyToMonitor | Where-Object { 
-                    $adProperties.Name -notContains $_ 
-                } | ForEach-Object {
-                    throw "Property '$_' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
-                }
-                #endregion
-            }
-            if ($adPropertyInReport -eq '*') {
-                Write-Verbose 'All properties will be reported'
-            }
-            else {
-                #region Test for valid AD properties
-                $adPropertyInReport | Where-Object { 
-                    $adProperties.Name -notContains $_ 
-                } | ForEach-Object {
-                    throw "Property '$_' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
-                }
-                #endregion
-
-                #region Add required minimal properties
+            #endregion
+            
+            #region Add required minimal properties for Excel differences file
+            if ($adPropertyInReport -ne '*') {
                 foreach (
                     $p in 
                     ($adPropertyToMonitor + @('SamAccountName', 'Status'))
@@ -326,7 +324,6 @@ Begin {
                         $adPropertyInReport += $p
                     }   
                 }
-                #endregion
             }
             #endregion
 
