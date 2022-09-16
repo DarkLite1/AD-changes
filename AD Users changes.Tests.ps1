@@ -441,7 +441,7 @@ Describe 'when the script runs for the first time' {
                 }
             )
 
-            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - State{*}.xlsx'
+            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - State.xlsx'
 
             $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'AllUsers'
         }
@@ -811,7 +811,7 @@ Describe 'when the script runs after a snapshot was created' {
                     }
                 )
     
-                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - State{*}.xlsx' | 
+                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - State.xlsx' | 
                 Sort-Object 'CreationTime' | Select-Object -Last 1
     
                 $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'AllUsers'
@@ -876,7 +876,7 @@ Describe 'when the script runs after a snapshot was created' {
                     Should -Be $testRow.WhenCreated.ToString('yyyyMMdd HHmm')
                 }
             }
-        }
+        } -Tag test
         Context 'export an Excel file with the differences' {
             BeforeAll {
                 $testExportedExcelRows = @(
@@ -925,7 +925,7 @@ Describe 'when the script runs after a snapshot was created' {
                     }
                 )
     
-                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences{*}.xlsx'
+                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences.xlsx'
     
                 $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'Differences'
             }
@@ -1129,7 +1129,7 @@ Describe 'when the script runs after a snapshot was created' {
                     }
                 )    
     
-                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - State{*}.xlsx' | 
+                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - State.xlsx' | 
                 Sort-Object 'CreationTime' | Select-Object -Last 1
     
                 $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'AllUsers'
@@ -1243,7 +1243,7 @@ Describe 'when the script runs after a snapshot was created' {
                     }
                 )
     
-                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences{*}.xlsx'
+                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences.xlsx'
     
                 $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'Differences'
             }
@@ -1414,7 +1414,7 @@ Describe 'when the script runs after a snapshot was created' {
                     }
                 )    
     
-                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - State{*}.xlsx' | 
+                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - State.xlsx' | 
                 Sort-Object 'CreationTime' | Select-Object -Last 1
     
                 $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'AllUsers'
@@ -1571,7 +1571,7 @@ Describe 'when the script runs after a snapshot was created' {
                     }
                 )
     
-                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences{*}.xlsx'
+                $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences.xlsx'
     
                 $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'Differences'
             }
@@ -1774,7 +1774,7 @@ Describe 'monitor only the requested AD properties' {
                 }
             )
 
-            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences{*}.xlsx'
+            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences.xlsx'
 
             $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'Differences'
         }
@@ -1907,7 +1907,7 @@ Describe 'export only the requested AD properties' {
                 }
             )
 
-            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences{*}.xlsx'
+            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Differences.xlsx'
 
             $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'Differences'
         }
@@ -2091,7 +2091,7 @@ Describe 'send a mail with SendMail.When set to Always when' {
                 Priority    = 'Normal'
                 Subject     = '1 added, 0 updated, 0 removed'
                 Message     = "*<p>AD user accounts:</p>*Check the attachment for details*"
-                Attachments = '* - Differences{*}.xlsx'
+                Attachments = '* - Differences.xlsx'
             }
         }
         It 'Send-MailHC has the correct arguments' {
@@ -2236,7 +2236,7 @@ Describe 'with SendMail.When set to OnlyWhenChangesAreFound' {
                 Priority    = 'Normal'
                 Subject     = '1 added, 0 updated, 0 removed'
                 Message     = "*<p>AD user accounts:</p>*Check the attachment for details*"
-                Attachments = '* - Differences{*}.xlsx'
+                Attachments = '* - Differences.xlsx'
             }
         }
         It 'Send-MailHC has the correct arguments' {

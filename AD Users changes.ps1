@@ -77,11 +77,12 @@ Begin {
         try {
             $logParams = @{
                 LogFolder    = New-Item -Path $LogFolder -ItemType 'Directory' -Force -ErrorAction 'Stop'
+                Name         = $ScriptName
                 Date         = 'ScriptStartTime'
                 Format       = 'yyyy-MM-dd HHmmss (DayOfWeek)'
                 NoFormatting = $true
-                Unique       = $true
             }
+            $logFile = New-LogFileNameHC @logParams
         }
         Catch {
             throw "Failed creating the log folder '$LogFolder': $_"
@@ -330,7 +331,7 @@ Begin {
                 Priority  = 'Normal'
                 LogFolder = $logParams.LogFolder
                 Header    = $ScriptName 
-                Save      = New-LogFileNameHC @logParams -Name "$ScriptName - Mail.html"
+                Save      = "$logFile - Mail.html"
             }
         }
         catch {
@@ -352,19 +353,18 @@ Process {
 
         $params = @{
             LiteralPath = $logParams.LogFolder
-            Filter      = '* - State{*}.xlsx'
+            Filter      = '* - State.xlsx'
             File        = $true
         }
-        $lastExcelFile = Get-ChildItem @params | Where-Object {
-            $_.CreationTime -lt $now
-        } | Sort-Object 'CreationTime' | Select-Object -Last 1
+        $lastExcelFile = Get-ChildItem @params | 
+        Sort-Object 'CreationTime' | Select-Object -Last 1
 
         $previousAdUsers = @()
 
         if ($lastExcelFile) {
             $params = @{
-                Path          = $lastExcelFile.FullName
-                ErrorAction   = 'Stop'
+                Path        = $lastExcelFile.FullName
+                ErrorAction = 'Stop'
             }
             $previousAdUsers += Import-Excel @params
 
@@ -407,7 +407,7 @@ Process {
 
         #region Export current AD users to Excel file
         $excelParams = @{
-            Path          = New-LogFileNameHC @logParams -Name "$ScriptName - State.xlsx"
+            Path          = "$logFile - State.xlsx"
             WorksheetName = 'AllUsers'
             TableName     = 'AllUsers'
             AutoSize      = $true
@@ -424,6 +424,11 @@ Process {
         #endregion
 
         if (-not $previousAdUsers) {
+            # wait 1 second to ensure we have a unique log file name
+            # in case the script runs immediately again
+            # this is an edge case scenario
+            Start-Sleep -Seconds 1
+
             $M = 'No comparison possible because there is no previously exported Excel file with AD user accounts yet. The next run will not have this issue because a snapshot of the current AD users has just been created and exported to Excel. This file will then be used for comparison on the next run.'
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             Write-EventLog @EventEndParams; Exit
@@ -558,7 +563,7 @@ Process {
         #region Export differences between previous and current AD users
         if ($differencesAdUsers) {
             $excelDifferencesParams = @{
-                Path          = New-LogFileNameHC @LogParams -Name "$ScriptName - Differences.xlsx"
+                Path          = "$logFile - Differences.xlsx"
                 WorksheetName = 'Differences'
                 TableName     = 'Differences'
                 AutoSize      = $true
