@@ -573,11 +573,13 @@ Process {
                 Verbose       = $false
             }
 
+            #region Verbose
             $M = "Export {0} row{1} to Excel file '{2}'" -f 
             $differencesAdUsers.Count, 
             $(if ($differencesAdUsers.Count -ne 1) { 's' }),
             $excelDifferencesParams.Path
             Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
+            #endregion
 
             $selectParams = @{
                 Property        = (
