@@ -304,7 +304,7 @@ Begin {
             }
             #endregion
 
-            #region Update properties to monitor
+            #region Remove always changing properties from properties to monitor
             if ($adPropertyToMonitor -eq '*') {
                 $adPropertyToMonitor = $adProperties.Name | Where-Object {
                     @(
