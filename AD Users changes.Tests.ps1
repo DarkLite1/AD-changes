@@ -876,7 +876,7 @@ Describe 'when the script runs after a snapshot was created' {
                     Should -Be $testRow.WhenCreated.ToString('yyyyMMdd HHmm')
                 }
             }
-        } -Tag test
+        }
         Context 'export an Excel file with the differences' {
             BeforeAll {
                 $testExportedExcelRows = @(
