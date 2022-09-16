@@ -57,6 +57,7 @@
                                     are found
 #>
 
+[CmdLetBinding()]
 Param (
     [Parameter(Mandatory)]
     [String]$ScriptName,
