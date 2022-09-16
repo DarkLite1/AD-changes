@@ -314,12 +314,9 @@ Begin {
             }
             #endregion
             
-            #region Add required minimal properties for Excel differences file
+            #region Add missing monitoring properties to Excel differences file
             if ($adPropertyInReport -ne '*') {
-                foreach (
-                    $p in 
-                    ($adPropertyToMonitor + @('SamAccountName', 'Status'))
-                ) {
+                foreach ($p in $adPropertyToMonitor) {
                     if ($adPropertyInReport -notContains $p) {
                         $adPropertyInReport += $p
                     }   
@@ -578,15 +575,28 @@ Process {
             Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
             #endregion
 
+            #region Order properties for Excel differences file
             $selectParams = @{
                 Property        = (
-                    $adPropertyInReport + @{
-                        Name       = 'UpdatedFields'
-                        Expression = { $_.UpdatedFields -join ', ' }
-                    }
+                    @(
+                        @{
+                            Name       = 'Status'
+                            Expression = { $_.Status }
+                        }
+                        @{
+                            Name       = 'UpdatedFields'
+                            Expression = { $_.UpdatedFields -join ', ' }
+                        }
+                        @{
+                            Name       = 'SamAccountName'
+                            Expression = { $_.SamAccountName }
+                        }
+                    ) + $adPropertyInReport
                 )
-                ExcludeProperty = 'UpdatedFields'
+                ExcludeProperty = @('Status', 'UpdatedFields', 'SamAccountName')
             }
+            #endregion
+
             $differencesAdUsers | Select-Object @selectParams | 
             Export-Excel @excelDifferencesParams
 
