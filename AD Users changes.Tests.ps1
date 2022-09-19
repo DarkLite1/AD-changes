@@ -48,6 +48,35 @@ Describe 'send an e-mail to the admin when' {
         }
     }
     Context 'the ImportFile' {
+        BeforeAll {
+            Function Remove-HashTablePropertyHC {
+                Param (
+                    [Parameter(Mandatory)]
+                    [HashTable]$HashTable,
+                    [Parameter(Mandatory)]
+                    [String[]]$PropertyName
+                )
+            
+                $PropertyName | ForEach-Object {
+                    $testHashTable = $HashTable
+                    $testPath = $_
+                    do {
+                        $keys = $testPath -split '\.', 2
+                                
+                        if ($keys.Count -eq 1) {
+                            $testHashTable.Remove($keys[0])
+                        }
+                        else {
+                            $testPath = $keys[1]
+                            $testHashTable = $testHashTable[$keys[0]]
+                        }
+                    
+                    } while (
+                        $keys.Count -ne 1
+                    )
+                }        
+            }
+        }
         It 'is not found' {
             $testNewParams = $testParams.clone()
             $testNewParams.ImportFile = 'nonExisting.json'
@@ -63,7 +92,7 @@ Describe 'send an e-mail to the admin when' {
             }
         }
         It 'is missing property <_>' -ForEach @(
-            'AD.OU', 
+            'AD.OU.Include', 
             'AD.PropertyToMonitor',
             'AD.PropertyInReport',
             'SendMail.To',
@@ -73,7 +102,9 @@ Describe 'send an e-mail to the admin when' {
                 AD       = @{
                     PropertyToMonitor = @('Office')
                     PropertyInReport  = @('SamAccountName', 'Office', 'Title')
-                    OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    OU                = @{
+                        Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    }
                 }
                 SendMail = @{
                     When = 'Always'
@@ -81,13 +112,7 @@ Describe 'send an e-mail to the admin when' {
                 }
             }
 
-            if ($_ -match '.') {
-                $keys = $_ -split '\.', 2
-                $testJsonFile[$keys[0]].Remove($keys[1])
-            }
-            else {
-                $testJsonFile.Remove($_)
-            }
+            Remove-HashTablePropertyHC -HashTable $testJsonFile -PropertyName $_
 
             $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
 
@@ -106,7 +131,9 @@ Describe 'send an e-mail to the admin when' {
                 AD       = @{
                     PropertyToMonitor = @('Office')
                     PropertyInReport  = @('SamAccountName', 'Office', 'foobar')
-                    OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    OU                = @{
+                        Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    }
                 }
                 SendMail = @{
                     When = 'Always'
@@ -130,7 +157,9 @@ Describe 'send an e-mail to the admin when' {
                 AD       = @{
                     PropertyToMonitor = @('foobar')
                     PropertyInReport  = @('SamAccountName', 'Office', 'Title')
-                    OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    OU                = @{
+                        Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    }
                 }
                 SendMail = @{
                     When = 'Always'
@@ -157,7 +186,9 @@ Describe 'send an e-mail to the admin when' {
             AD       = @{
                 PropertyToMonitor = @('Office')
                 PropertyInReport  = @('SamAccountName', 'Office', 'Title')
-                OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                OU                = @{
+                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                }
             }
             SendMail = @{
                 When = 'Always'
@@ -336,7 +367,9 @@ Describe 'when the script runs for the first time' {
             AD       = @{
                 PropertyToMonitor = @('Office')
                 PropertyInReport  = @('SamAccountName', 'Office', 'Title')
-                OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                OU                = @{
+                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                }
             }
             SendMail = @{
                 When = 'Always'
@@ -350,7 +383,7 @@ Describe 'when the script runs for the first time' {
     Context 'collect all AD user accounts' {
         It 'call Get-AdUser with the correct arguments' {
             Should -Invoke Get-AdUser -Scope Describe -Times 1 -Exactly -ParameterFilter {
-                ($SearchBase -eq $testJsonFile.AD.OU)
+                ($SearchBase -eq $testJsonFile.AD.OU.Include)
             }
         }
     }
@@ -746,7 +779,9 @@ Describe 'when the script runs after a snapshot was created' {
             AD       = @{
                 PropertyToMonitor = @('Description', 'Title')
                 PropertyInReport  = @('*')
-                OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                OU                = @{
+                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                }
             }
             SendMail = @{
                 When = 'Always'
@@ -1729,7 +1764,9 @@ Describe 'monitor only the requested AD properties' {
             AD       = @{
                 PropertyToMonitor = @('Description')
                 PropertyInReport  = @('Office', 'Title')
-                OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                OU                = @{
+                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                }
             }
             SendMail = @{
                 When = 'Always'
@@ -1861,7 +1898,9 @@ Describe 'export only the requested AD properties' {
             AD       = @{
                 PropertyToMonitor = @('Description', 'Title')
                 PropertyInReport  = @('Office')
-                OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                OU                = @{
+                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                }
             }
             SendMail = @{
                 When = 'Always'
@@ -2032,7 +2071,9 @@ Describe 'send a mail with SendMail.When set to Always when' {
             AD       = @{
                 PropertyToMonitor = @('Description', 'Title')
                 PropertyInReport  = @('Office')
-                OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                OU                = @{
+                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                }
             }
             SendMail = @{
                 When = 'Always'
@@ -2203,7 +2244,9 @@ Describe 'with SendMail.When set to OnlyWhenChangesAreFound' {
             AD       = @{
                 PropertyToMonitor = @('Description', 'Title')
                 PropertyInReport  = @('Office')
-                OU                = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                OU                = @{
+                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                }
             }
             SendMail = @{
                 When = 'OnlyWhenChangesAreFound'

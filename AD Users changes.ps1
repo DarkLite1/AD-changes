@@ -290,8 +290,8 @@ Begin {
                     throw "Property '$_' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
                 }
             }
-            if (-not ($adOU = $file.AD.OU)) {
-                throw "Property 'AD.OU' not found."
+            if (-not ($adOuInclude = $file.AD.OU.Include)) {
+                throw "Property 'AD.OU.Include' not found."
             }
             if (-not ($mailTo = $file.SendMail.To)) {
                 throw "Property 'SendMail.To' not found."
@@ -379,7 +379,7 @@ Process {
         #endregion
 
         #region Get current AD users
-        [Array]$currentAdUsers = foreach ($ou in $adOU) {
+        [Array]$currentAdUsers = foreach ($ou in $adOuInclude) {
             $M = "Get user accounts in OU '$ou'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
