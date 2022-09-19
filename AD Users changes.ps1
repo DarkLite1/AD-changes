@@ -27,17 +27,21 @@
         Contains all the required parameters to run the script. These parameters
         are explained below and an example can be found in file 'Example.json'.
 
-    .PARAMETER AD.OU
+    .PARAMETER AD.OU.Include
         Collection of organizational units in active directory where to search 
         for user accounts.
 
-    .PARAMETER AD.PropertyToMonitor
+    .PARAMETER AD.OU.Exclude
+        Collection of organizational units in active directory that will be 
+        excluded from the search results.
+
+    .PARAMETER AD.Property.ToMonitor
         Collection of active directory fields where to look for changes. All 
         other fields are disregarded.
         
         Wildcard '*' is supported and will monitor all active directory fields.
 
-    .PARAMETER AD.PropertyInReport
+    .PARAMETER AD.Property.InReport
         Collection of active directory fields to export to the Excel file 
         'Differences{0}.xlsx' where the changes are stored.
         
@@ -270,24 +274,24 @@ Begin {
             #endregion
 
             #region Test .json file
-            if (-not ([array]$adPropertyToMonitor = $file.AD.PropertyToMonitor)) {
-                throw "Property 'AD.PropertyToMonitor' not found."
+            if (-not ([array]$adPropertyToMonitor = $file.AD.Property.ToMonitor)) {
+                throw "Property 'AD.Property.ToMonitor' not found."
             }
             if ($adPropertyToMonitor -ne '*') {
                 $adPropertyToMonitor | Where-Object { 
                     $adProperties.Name -notContains $_ 
                 } | ForEach-Object {
-                    throw "Property '$_' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
+                    throw "Property '$_' defined in 'AD.Property.ToMonitor' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
                 }
             }
-            if (-not ([array]$adPropertyInReport = $file.AD.PropertyInReport)) {
-                throw "Property 'AD.PropertyInReport' not found."
+            if (-not ([array]$adPropertyInReport = $file.AD.Property.InReport)) {
+                throw "Property 'AD.Property.InReport' not found."
             }
             if ($adPropertyInReport -ne '*') {
                 $adPropertyInReport | Where-Object { 
                     $adProperties.Name -notContains $_ 
                 } | ForEach-Object {
-                    throw "Property '$_' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
+                    throw "Property '$_' defined in 'AD.Property.InReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
                 }
             }
             if (-not ($adOuInclude = $file.AD.OU.Include)) {

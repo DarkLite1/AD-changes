@@ -94,16 +94,18 @@ Describe 'send an e-mail to the admin when' {
         }
         It 'is missing property <_>' -ForEach @(
             'AD.OU.Include', 
-            'AD.PropertyToMonitor',
-            'AD.PropertyInReport',
+            'AD.Property.ToMonitor',
+            'AD.Property.InReport',
             'SendMail.To',
             'SendMail.When'
         ) {
             $testJsonFile = @{
                 AD       = @{
-                    PropertyToMonitor = @('Office')
-                    PropertyInReport  = @('SamAccountName', 'Office', 'Title')
-                    OU                = @{
+                    Property = @{
+                        ToMonitor = @('Office') 
+                        InReport  = @('SamAccountName', 'Office', 'Title')
+                    }
+                    OU       = @{
                         Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                     }
                 }
@@ -127,12 +129,14 @@ Describe 'send an e-mail to the admin when' {
                 $EntryType -eq 'Error'
             }
         }
-        It 'AD.PropertyInReport contains an unknown AD property' {
+        It 'AD.Property.InReport contains an unknown AD property' {
             $testJsonFile = @{
                 AD       = @{
-                    PropertyToMonitor = @('Office')
-                    PropertyInReport  = @('SamAccountName', 'Office', 'foobar')
-                    OU                = @{
+                    Property = @{
+                        ToMonitor = @('Office') 
+                        InReport  = @('SamAccountName', 'Office', 'foobar')
+                    }
+                    OU       = @{
                         Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                     }
                 }
@@ -147,18 +151,20 @@ Describe 'send an e-mail to the admin when' {
                         
             Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                 (&$MailAdminParams) -and 
-                ($Message -like "*Property 'foobar' defined in 'AD.PropertyInReport' is not a valid AD property. Valid AD properties are*")
+                ($Message -like "*Property 'foobar' defined in 'AD.Property.InReport' is not a valid AD property. Valid AD properties are*")
             }
             Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
                 $EntryType -eq 'Error'
             }
         }
-        It 'AD.PropertyToMonitor contains an unknown AD property' {
+        It 'AD.Property.ToMonitor contains an unknown AD property' {
             $testJsonFile = @{
                 AD       = @{
-                    PropertyToMonitor = @('foobar')
-                    PropertyInReport  = @('SamAccountName', 'Office', 'Title')
-                    OU                = @{
+                    Property = @{
+                        ToMonitor = @('foobar')
+                        InReport  = @('SamAccountName', 'Office', 'Title')
+                    }
+                    OU       = @{
                         Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                     }
                 }
@@ -173,7 +179,7 @@ Describe 'send an e-mail to the admin when' {
                         
             Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                 (&$MailAdminParams) -and 
-                ($Message -like "*Property 'foobar' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are*")
+                ($Message -like "*Property 'foobar' defined in 'AD.Property.ToMonitor' is not a valid AD property. Valid AD properties are*")
             }
             Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
                 $EntryType -eq 'Error'
@@ -182,9 +188,11 @@ Describe 'send an e-mail to the admin when' {
         It 'AD.OU.Include contains a non existing OU' {
             $testJsonFile = @{
                 AD       = @{
-                    PropertyToMonitor = @('Office')
-                    PropertyInReport  = @('SamAccountName', 'Office', 'Title')
-                    OU                = @{
+                    Property = @{
+                        ToMonitor = @('Office') 
+                        InReport  = @('SamAccountName', 'Office', 'Title')
+                    }
+                    OU       = @{
                         Include = @('OU=Wrong,DC=contoso,DC=com')
                         Exclude = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                     }
@@ -213,9 +221,11 @@ Describe 'send an e-mail to the admin when' {
         It 'AD.OU.Exclude contains a non existing OU' {
             $testJsonFile = @{
                 AD       = @{
-                    PropertyToMonitor = @('Office')
-                    PropertyInReport  = @('SamAccountName', 'Office', 'Title')
-                    OU                = @{
+                    Property = @{
+                        ToMonitor = @('Office') 
+                        InReport  = @('SamAccountName', 'Office', 'Title')
+                    }
+                    OU       = @{
                         Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                         Exclude = @('OU=Wrong,DC=contoso,DC=com')
                     }
@@ -247,9 +257,11 @@ Describe 'send an e-mail to the admin when' {
         
         $testJsonFile = @{
             AD       = @{
-                PropertyToMonitor = @('Office')
-                PropertyInReport  = @('SamAccountName', 'Office', 'Title')
-                OU                = @{
+                Property = @{
+                    ToMonitor = @('Office')
+                    InReport  = @('SamAccountName', 'Office', 'Title') 
+                }
+                OU       = @{
                     Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
@@ -428,9 +440,11 @@ Describe 'when the script runs for the first time' {
 
         $testJsonFile = @{
             AD       = @{
-                PropertyToMonitor = @('Office')
-                PropertyInReport  = @('SamAccountName', 'Office', 'Title')
-                OU                = @{
+                Property = @{
+                    ToMonitor = @('Office') 
+                    InReport  = @('SamAccountName', 'Office', 'Title')
+                }
+                OU       = @{
                     Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
@@ -840,9 +854,11 @@ Describe 'when the script runs after a snapshot was created' {
 
         $testJsonFile = @{
             AD       = @{
-                PropertyToMonitor = @('Description', 'Title')
-                PropertyInReport  = @('*')
-                OU                = @{
+                Property = @{
+                    ToMonitor = @('Description', 'Title')
+                    InReport  = @('*')
+                }
+                OU       = @{
                     Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
@@ -1825,9 +1841,11 @@ Describe 'monitor only the requested AD properties' {
 
         $testJsonFile = @{
             AD       = @{
-                PropertyToMonitor = @('Description')
-                PropertyInReport  = @('Office', 'Title')
-                OU                = @{
+                Property = @{
+                    ToMonitor = @('Description')
+                    InReport  = @('Office', 'Title')
+                }
+                OU       = @{
                     Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
@@ -1959,9 +1977,11 @@ Describe 'export only the requested AD properties' {
 
         $testJsonFile = @{
             AD       = @{
-                PropertyToMonitor = @('Description', 'Title')
-                PropertyInReport  = @('Office')
-                OU                = @{
+                Property = @{
+                    ToMonitor = @('Description', 'Title')
+                    InReport  = @('Office')
+                }
+                OU       = @{
                     Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
@@ -2132,9 +2152,11 @@ Describe 'send a mail with SendMail.When set to Always when' {
 
         $testJsonFile = @{
             AD       = @{
-                PropertyToMonitor = @('Description', 'Title')
-                PropertyInReport  = @('Office')
-                OU                = @{
+                Property = @{
+                    ToMonitor = @('Description', 'Title')
+                    InReport  = @('Office')
+                }
+                OU       = @{
                     Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
@@ -2305,9 +2327,11 @@ Describe 'with SendMail.When set to OnlyWhenChangesAreFound' {
 
         $testJsonFile = @{
             AD       = @{
-                PropertyToMonitor = @('Description', 'Title')
-                PropertyInReport  = @('Office')
-                OU                = @{
+                Property = @{
+                    ToMonitor = @('Description', 'Title')
+                    InReport  = @('Office')
+                }
+                OU       = @{
                     Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
