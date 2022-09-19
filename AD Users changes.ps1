@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 #Requires -Modules ActiveDirectory, ImportExcel
-#Requires -Modules Toolbox.HTML, Toolbox.EventLog
+#Requires -Modules Toolbox.ActiveDirectory, Toolbox.HTML, Toolbox.EventLog
 
 <#
     .SYNOPSIS
@@ -293,6 +293,10 @@ Begin {
             if (-not ($adOuInclude = $file.AD.OU.Include)) {
                 throw "Property 'AD.OU.Include' not found."
             }
+            $adOuInclude | Where-Object { -not (Test-ADOuExistsHC -Name $_) } | 
+            ForEach-Object {
+                throw "OU '$_' defined in 'AD.OU.Include' does not exist"
+            }
             if (-not ($mailTo = $file.SendMail.To)) {
                 throw "Property 'SendMail.To' not found."
             }
@@ -303,6 +307,16 @@ Begin {
                 $mailWhen -notMatch '^Always$|^OnlyWhenChangesAreFound$'
             ) {
                 throw "The value '$mailWhen' in 'SendMail.When' is not supported. Only the value 'Always' or 'OnlyWhenChangesAreFound' can be used."
+            }
+            #endregion
+
+            #region Convert excluded OU's to match Excel file format
+            $adOuExclude = $file.AD.OU.Exclude | Where-Object { $_ } | 
+            ForEach-Object {
+                if (-not (Test-ADOuExistsHC -Name $_)) {
+                    throw "OU '$_' defined in 'AD.OU.Exclude' does not exist"
+                }
+                ConvertTo-OuNameHC -Name $_
             }
             #endregion
 
@@ -368,7 +382,9 @@ Process {
                 Path        = $lastExcelFile.FullName
                 ErrorAction = 'Stop'
             }
-            $previousAdUsers += Import-Excel @params
+            $previousAdUsers += Import-Excel @params | Where-Object {
+                $adOuExclude -notContains $_.OU
+            }
 
             $M = "Found {0} AD user account{1} in Excel file '{2}'" -f 
             $previousAdUsers.Count, 
@@ -395,7 +411,9 @@ Process {
                 'ScriptPath', 'Title', 'UserPrincipalName', 'WhenChanged' , 
                 'WhenCreated'
             ) |
-            Select-Object -Property $adProperties
+            Select-Object -Property $adProperties | Where-Object {
+                $adOuExclude -notContains $_.OU
+            }
         }
 
         $M = 'Found {0} user account{1} in AD' -f $currentAdUsers.Count,

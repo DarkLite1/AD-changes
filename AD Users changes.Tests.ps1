@@ -18,6 +18,7 @@ BeforeAll {
     Mock Get-ADUser
     Mock Get-ADTSProfileHC
     Mock Send-MailHC
+    Mock Test-ADOuExistsHC { $true }
     Mock Write-EventLog
 }
 Describe 'the mandatory parameters are' {
@@ -173,6 +174,68 @@ Describe 'send an e-mail to the admin when' {
             Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                 (&$MailAdminParams) -and 
                 ($Message -like "*Property 'foobar' defined in 'AD.PropertyToMonitor' is not a valid AD property. Valid AD properties are*")
+            }
+            Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                $EntryType -eq 'Error'
+            }
+        }
+        It 'AD.OU.Include contains a non existing OU' {
+            $testJsonFile = @{
+                AD       = @{
+                    PropertyToMonitor = @('Office')
+                    PropertyInReport  = @('SamAccountName', 'Office', 'Title')
+                    OU                = @{
+                        Include = @('OU=Wrong,DC=contoso,DC=com')
+                        Exclude = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    }
+                }
+                SendMail = @{
+                    When = 'Always'
+                    To   = 'bob@contoso.com'
+                }
+            }
+            $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+            
+            Mock Test-ADOuExistsHC { $false } -ParameterFilter {
+                $Name -eq $testJsonFile.AD.OU.Include
+            }
+            
+            .$testScript @testParams
+                        
+            Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+                (&$MailAdminParams) -and 
+                ($Message -like "*OU 'OU=Wrong,DC=contoso,DC=com' defined in 'AD.OU.Include' does not exist*")
+            }
+            Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                $EntryType -eq 'Error'
+            }
+        } -Tag test
+        It 'AD.OU.Exclude contains a non existing OU' {
+            $testJsonFile = @{
+                AD       = @{
+                    PropertyToMonitor = @('Office')
+                    PropertyInReport  = @('SamAccountName', 'Office', 'Title')
+                    OU                = @{
+                        Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                        Exclude = @('OU=Wrong,DC=contoso,DC=com')
+                    }
+                }
+                SendMail = @{
+                    When = 'Always'
+                    To   = 'bob@contoso.com'
+                }
+            }
+            $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+            
+            Mock Test-ADOuExistsHC { $false } -ParameterFilter {
+                $Name -eq $testJsonFile.AD.OU.Exclude
+            }
+            
+            .$testScript @testParams
+                        
+            Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+                (&$MailAdminParams) -and 
+                ($Message -like "*OU 'OU=Wrong,DC=contoso,DC=com' defined in 'AD.OU.Exclude' does not exist*")
             }
             Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
                 $EntryType -eq 'Error'
