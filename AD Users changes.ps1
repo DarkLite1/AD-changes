@@ -310,7 +310,8 @@ Begin {
             if ($adPropertyToMonitor -eq '*') {
                 $adPropertyToMonitor = $adProperties.Name | Where-Object {
                     @(
-                        'WhenChanged', 'WhenCreated', 'LastLogonDate'
+                        'LastLogonDate', 'PasswordExpired',
+                        'WhenChanged', 'WhenCreated'
                     ) -notContains $_
                 }
             }
