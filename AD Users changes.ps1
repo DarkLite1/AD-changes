@@ -317,10 +317,13 @@ Begin {
             #region Convert excluded OU's to match Excel file format
             $adOuExclude = $file.AD.OU.Exclude | Where-Object { $_ } | 
             ForEach-Object {
+                $M = "Ignore OU '{0}'" -f $_
+                Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+
                 if (-not (Test-ADOuExistsHC -Name $_)) {
                     throw "OU '$_' defined in 'AD.OU.Exclude' does not exist"
                 }
-                ConvertTo-OuNameHC -Name $_
+                ConvertTo-OuNameHC -OU $_
             }
             #endregion
 
