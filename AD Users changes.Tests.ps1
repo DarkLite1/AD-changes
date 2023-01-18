@@ -17,6 +17,7 @@ BeforeAll {
     Mock Get-ADDisplayNameHC
     Mock Get-ADUser
     Mock Get-ADTSProfileHC
+    Mock Get-ADGroup
     Mock Send-MailHC
     Mock Test-ADOuExistsHC { $true }
     Mock Write-EventLog
@@ -222,6 +223,39 @@ Describe 'send an e-mail to the admin when' {
                 $EntryType -eq 'Error'
             }
         }
+        It 'AD.Include.Name contains a non existing Group' {
+            $testJsonFile = @{
+                AD       = @{
+                    Property = @{
+                        ToMonitor = @('Office') 
+                        InReport  = @('SamAccountName', 'Office', 'Title')
+                    }
+                    Include  = @{
+                        Type = 'Group'
+                        Name = @('Wrong')
+                    }
+                }
+                SendMail = @{
+                    When = 'Always'
+                    To   = 'bob@contoso.com'
+                }
+            }
+            $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+            
+            Mock Get-ADGroup -ParameterFilter {
+                $Filter -eq 'Name -EQ Wrong'
+            }
+            
+            .$testScript @testParams
+                        
+            Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+                (&$MailAdminParams) -and 
+                ($Message -like "*Group 'Wrong' defined in 'AD.Include.Name' does not exist*")
+            }
+            Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                $EntryType -eq 'Error'
+            }
+        } -Tag test
         It 'AD.Include.Type contains an incorrect value' {
             $testJsonFile = @{
                 AD       = @{

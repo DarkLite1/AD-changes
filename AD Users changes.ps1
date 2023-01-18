@@ -294,18 +294,30 @@ Begin {
                     throw "Property '$_' defined in 'AD.Property.InReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
                 }
             }
-            if (-not $file.AD.Include.Type) {
+            if (-not ($includeType = $file.AD.Include.Type)) {
                 throw "Property 'AD.Include.Type' not found."
             }
-            if (-not ($adOuInclude = $file.AD.Include.Name)) {
+            if ($includeType -notMatch '^OU$|^Group$') {
+                throw "Property 'AD.Include.Type' has the incorrect value '$($includeType)'. Valid options are 'OU' or 'Group'."
+            }
+            if (-not ($includeName = $file.AD.Include.Name)) {
                 throw "Property 'AD.Include.Name' not found."
             }
-            if ($file.AD.Include.Type -notMatch '^OU$|^Group$') {
-                throw "Property 'AD.Include.Type' has the incorrect value '$($file.AD.Include.Type)'. Valid options are 'OU' or 'Group'."
+            if ($includeType -eq 'OU') {
+                $includeName | 
+                Where-Object { -not (Test-ADOuExistsHC -Name $_) } | 
+                ForEach-Object {
+                    throw "OU '$_' defined in 'AD.Include.Name' does not exist"
+                }
             }
-            $adOuInclude | Where-Object { -not (Test-ADOuExistsHC -Name $_) } | 
-            ForEach-Object {
-                throw "OU '$_' defined in 'AD.Include.Name' does not exist"
+            if ($includeType -eq 'Group') {
+                $includeName | 
+                Where-Object { 
+                    -not (Get-ADGroup -Filter { Name -EQ $_ } -EA Ignore ) 
+                } | 
+                ForEach-Object {
+                    throw "Group '$_' defined in 'AD.Include.Name' does not exist"
+                }
             }
             if (-not ($mailTo = $file.SendMail.To)) {
                 throw "Property 'SendMail.To' not found."
@@ -408,7 +420,7 @@ Process {
         #endregion
 
         #region Get current AD users
-        [Array]$currentAdUsers = foreach ($ou in $adOuInclude) {
+        [Array]$currentAdUsers = foreach ($ou in $includeName) {
             $M = "Get user accounts in OU '$ou'"
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
