@@ -31,7 +31,7 @@
         Collection of organizational units in active directory where to search 
         for user accounts.
 
-    .PARAMETER AD.OU.Exclude
+    .PARAMETER AD.Exclude.OU
         Collection of organizational units in active directory that will be 
         excluded from the search results.
 
@@ -294,12 +294,18 @@ Begin {
                     throw "Property '$_' defined in 'AD.Property.InReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
                 }
             }
-            if (-not ($adOuInclude = $file.AD.OU.Include)) {
-                throw "Property 'AD.OU.Include' not found."
+            if (-not $file.AD.Include.Type) {
+                throw "Property 'AD.Include.Type' not found."
+            }
+            if (-not ($adOuInclude = $file.AD.Include.Name)) {
+                throw "Property 'AD.Include.Name' not found."
+            }
+            if ($file.AD.Include.Type -notMatch '^OU$|^Group$') {
+                throw "Property 'AD.Include.Type' has the incorrect value '$($file.AD.Include.Type)'. Valid options are 'OU' or 'Group'."
             }
             $adOuInclude | Where-Object { -not (Test-ADOuExistsHC -Name $_) } | 
             ForEach-Object {
-                throw "OU '$_' defined in 'AD.OU.Include' does not exist"
+                throw "OU '$_' defined in 'AD.Include.Name' does not exist"
             }
             if (-not ($mailTo = $file.SendMail.To)) {
                 throw "Property 'SendMail.To' not found."
@@ -315,13 +321,13 @@ Begin {
             #endregion
 
             #region Convert excluded OU's to match Excel file format
-            $adOuExclude = $file.AD.OU.Exclude | Where-Object { $_ } | 
+            $adOuExclude = $file.AD.Exclude.OU | Where-Object { $_ } | 
             ForEach-Object {
                 $M = "Ignore OU '{0}'" -f $_
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
                 if (-not (Test-ADOuExistsHC -Name $_)) {
-                    throw "OU '$_' defined in 'AD.OU.Exclude' does not exist"
+                    throw "OU '$_' defined in 'AD.Exclude.OU' does not exist"
                 }
                 ConvertTo-OuNameHC -OU $_
             }
