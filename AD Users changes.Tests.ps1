@@ -15,9 +15,10 @@ BeforeAll {
     }
 
     Mock Get-ADDisplayNameHC
-    Mock Get-ADUser
-    Mock Get-ADTSProfileHC
     Mock Get-ADGroup
+    Mock Get-ADGroupMember
+    Mock Get-ADTSProfileHC
+    Mock Get-ADUser
     Mock Send-MailHC
     Mock Test-ADOuExistsHC { $true }
     Mock Write-EventLog
@@ -243,7 +244,7 @@ Describe 'send an e-mail to the admin when' {
             $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
             
             Mock Get-ADGroup -ParameterFilter {
-                $Filter -eq 'Name -EQ Wrong'
+                $Filter -eq "Name -EQ 'Wrong'"
             }
             
             .$testScript @testParams
@@ -255,7 +256,7 @@ Describe 'send an e-mail to the admin when' {
             Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
                 $EntryType -eq 'Error'
             }
-        } -Tag test
+        }
         It 'AD.Include.Type contains an incorrect value' {
             $testJsonFile = @{
                 AD       = @{
@@ -326,35 +327,78 @@ Describe 'send an e-mail to the admin when' {
             }
         }
     }
-    It 'no AD user accounts were found' {
-        Mock Get-AdUser
+    Context 'no AD user accounts were found in the' {
+        It 'Group' {
+            Mock Get-ADGroup {
+                $true
+            } -ParameterFilter {
+                $Filter -eq "Name -EQ 'Group1'"
+            }
+
+            Mock Get-ADGroupMember {
+
+            } -ParameterFilter {
+                $Identity -eq 'Group1'
+            }
         
-        $testJsonFile = @{
-            AD       = @{
-                Property = @{
-                    ToMonitor = @('Office')
-                    InReport  = @('SamAccountName', 'Office', 'Title') 
+            $testJsonFile = @{
+                AD       = @{
+                    Property = @{
+                        ToMonitor = @('Office')
+                        InReport  = @('SamAccountName', 'Office', 'Title') 
+                    }
+                    Include  = @{
+                        Type = 'Group'
+                        Name = @('Group1')
+                    }
                 }
-                Include  = @{
-                    Type = 'OU'
-                    Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                SendMail = @{
+                    When = 'Always'
+                    To   = 'bob@contoso.com'
                 }
             }
-            SendMail = @{
-                When = 'Always'
-                To   = 'bob@contoso.com'
-            }
-        }
-        $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+            $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
 
-        . $testScript @testParams
+            . $testScript @testParams
 
-        Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+            Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
             (&$MailAdminParams) -and 
             ($Message -like '*No AD user accounts found*')
+            }
+            Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                $EntryType -eq 'Error'
+            }
         }
-        Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
-            $EntryType -eq 'Error'
+        It 'OU' {
+            Mock Get-AdUser
+        
+            $testJsonFile = @{
+                AD       = @{
+                    Property = @{
+                        ToMonitor = @('Office')
+                        InReport  = @('SamAccountName', 'Office', 'Title') 
+                    }
+                    Include  = @{
+                        Type = 'OU'
+                        Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    }
+                }
+                SendMail = @{
+                    When = 'Always'
+                    To   = 'bob@contoso.com'
+                }
+            }
+            $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
+
+            . $testScript @testParams
+
+            Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+            (&$MailAdminParams) -and 
+            ($Message -like '*No AD user accounts found*')
+            }
+            Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                $EntryType -eq 'Error'
+            }
         }
     }
 }

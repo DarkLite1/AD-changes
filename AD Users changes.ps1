@@ -294,26 +294,26 @@ Begin {
                     throw "Property '$_' defined in 'AD.Property.InReport' is not a valid AD property. Valid AD properties are: $($adProperties.Name)"
                 }
             }
-            if (-not ($includeType = $file.AD.Include.Type)) {
+            if (-not ($adIncludeType = $file.AD.Include.Type)) {
                 throw "Property 'AD.Include.Type' not found."
             }
-            if ($includeType -notMatch '^OU$|^Group$') {
-                throw "Property 'AD.Include.Type' has the incorrect value '$($includeType)'. Valid options are 'OU' or 'Group'."
+            if ($adIncludeType -notMatch '^OU$|^Group$') {
+                throw "Property 'AD.Include.Type' has the incorrect value '$($adIncludeType)'. Valid options are 'OU' or 'Group'."
             }
-            if (-not ($includeName = $file.AD.Include.Name)) {
+            if (-not ($adIncludeName = $file.AD.Include.Name)) {
                 throw "Property 'AD.Include.Name' not found."
             }
-            if ($includeType -eq 'OU') {
-                $includeName | 
+            if ($adIncludeType -eq 'OU') {
+                $adIncludeName | 
                 Where-Object { -not (Test-ADOuExistsHC -Name $_) } | 
                 ForEach-Object {
                     throw "OU '$_' defined in 'AD.Include.Name' does not exist"
                 }
             }
-            if ($includeType -eq 'Group') {
-                $includeName | 
+            else {
+                $adIncludeName | 
                 Where-Object { 
-                    -not (Get-ADGroup -Filter { Name -EQ $_ } -EA Ignore ) 
+                    -not (Get-ADGroup -Filter "Name -EQ '$_'" -EA Ignore ) 
                 } | 
                 ForEach-Object {
                     throw "Group '$_' defined in 'AD.Include.Name' does not exist"
@@ -333,7 +333,7 @@ Begin {
             #endregion
 
             #region Convert excluded OU's to match Excel file format
-            $adOuExclude = $file.AD.Exclude.OU | Where-Object { $_ } | 
+            $adExcludeOu = $file.AD.Exclude.OU | Where-Object { $_ } | 
             ForEach-Object {
                 $M = "Ignore OU '{0}'" -f $_
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
@@ -408,7 +408,7 @@ Process {
                 ErrorAction = 'Stop'
             }
             $previousAdUsers += Import-Excel @params | Where-Object {
-                $adOuExclude -notContains $_.OU
+                $adExcludeOu -notContains $_.OU
             }
 
             $M = "Found {0} AD user account{1} in Excel file '{2}'" -f 
@@ -420,26 +420,50 @@ Process {
         #endregion
 
         #region Get current AD users
-        [Array]$currentAdUsers = foreach ($ou in $includeName) {
-            $M = "Get user accounts in OU '$ou'"
-            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+        $currentAdUsers = if ($adIncludeType -eq 'OU') {
+            foreach ($ou in $adIncludeName) {
+                $M = "Get user accounts in OU '$ou'"
+                Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
-            Get-ADUser -SearchBase $ou -Filter '*' -Properties @(
-                'AccountExpirationDate', 'CanonicalName', 'Co', 'Company', 
-                'Department', 'Description', 'DisplayName', 
-                'DistinguishedName', 'EmailAddress', 'EmployeeID', 
-                'EmployeeType', 'Enabled', 'ExtensionAttribute8', 'Fax', 
-                'GivenName', 'HomePhone', 'HomeDirectory', 'Info', 'IpPhone', 
-                'Surname', 'LastLogonDate', 'LockedOut', 'Manager', 
-                'MobilePhone', 'Name', 'Office', 'OfficePhone', 'Pager', 
-                'PasswordExpired', 'PasswordNeverExpires', 'SamAccountName', 
-                'ScriptPath', 'Title', 'UserPrincipalName', 'WhenChanged' , 
-                'WhenCreated'
-            ) |
-            Select-Object -Property $adProperties | Where-Object {
-                $adOuExclude -notContains $_.OU
+                Get-ADUser -SearchBase $ou -Filter '*' -Properties @(
+                    'AccountExpirationDate', 'CanonicalName', 'Co', 'Company', 
+                    'Department', 'Description', 'DisplayName', 
+                    'DistinguishedName', 'EmailAddress', 'EmployeeID', 
+                    'EmployeeType', 'Enabled', 'ExtensionAttribute8', 'Fax', 
+                    'GivenName', 'HomePhone', 'HomeDirectory', 'Info', 'IpPhone', 
+                    'Surname', 'LastLogonDate', 'LockedOut', 'Manager', 
+                    'MobilePhone', 'Name', 'Office', 'OfficePhone', 'Pager', 
+                    'PasswordExpired', 'PasswordNeverExpires', 'SamAccountName', 
+                    'ScriptPath', 'Title', 'UserPrincipalName', 'WhenChanged' , 
+                    'WhenCreated'
+                )
             }
         }
+        else {
+            foreach ($group in $adIncludeName) {
+                $M = "Get user accounts in group '$group'"
+                Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+
+                Get-ADGroupMember -Identity $group -Recursive | 
+                Get-ADUser -Properties @(
+                    'AccountExpirationDate', 'CanonicalName', 'Co', 'Company', 
+                    'Department', 'Description', 'DisplayName', 
+                    'DistinguishedName', 'EmailAddress', 'EmployeeID', 
+                    'EmployeeType', 'Enabled', 'ExtensionAttribute8', 'Fax', 
+                    'GivenName', 'HomePhone', 'HomeDirectory', 'Info', 'IpPhone', 
+                    'Surname', 'LastLogonDate', 'LockedOut', 'Manager', 
+                    'MobilePhone', 'Name', 'Office', 'OfficePhone', 'Pager', 
+                    'PasswordExpired', 'PasswordNeverExpires', 'SamAccountName', 
+                    'ScriptPath', 'Title', 'UserPrincipalName', 'WhenChanged' , 
+                    'WhenCreated'
+                )
+            }
+        }
+
+        [array]$currentAdUsers = $currentAdUsers | 
+        Sort-Object -Unique -Property 'SamAccountName' | 
+        Select-Object -Property $adProperties | 
+        Where-Object { $adExcludeOu -notContains $_.OU }
 
         $M = 'Found {0} user account{1} in AD' -f $currentAdUsers.Count,
         $(if ($currentAdUsers.Count -ne 1) { 's' })
