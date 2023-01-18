@@ -775,10 +775,14 @@ End {
             $htmlErrorList
             <p>AD user accounts:</p>
             $htmlTable
-            {0}" -f $(
+            {0}{1}" -f $(
                 if ($mailParams.Attachments) {
                     '<p><i>* Check the attachment for details</i></p>'
                 }
+            ),
+            $(
+                $adIncludeName | ConvertTo-OuNameHC -OU | Sort-Object |
+                ConvertTo-HtmlListHC -Header "$adIncludeType`:"
             )
             
             $M = "Send mail`r`n- Header:`t{0}`r`n- To:`t`t{1}`r`n- Subject:`t{2}" -f 
