@@ -27,13 +27,20 @@
         Contains all the required parameters to run the script. These parameters
         are explained below and an example can be found in file 'Example.json'.
 
-    .PARAMETER AD.OU.Include
-        Collection of organizational units in active directory where to search 
-        for user accounts.
+    .PARAMETER AD.Include.Type
+        Where to search for user accounts in the active directory.
+
+        Valid values are:
+        - OU    : Collection of organizational units
+        - Group : Collection of groups
+
+    .PARAMETER AD.Include.Name
+        Depending on the selected Type, can be a collection of OU's or group 
+        names.
 
     .PARAMETER AD.Exclude.OU
-        Collection of organizational units in active directory that will be 
-        excluded from the search results.
+        Active directory user accounts that are located in one of the excluded 
+        organizational units will be excluded from the search results.
 
     .PARAMETER AD.Property.ToMonitor
         Collection of active directory fields where to look for changes. All 
