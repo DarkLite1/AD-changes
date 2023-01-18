@@ -93,7 +93,8 @@ Describe 'send an e-mail to the admin when' {
             }
         }
         It 'is missing property <_>' -ForEach @(
-            'AD.OU.Include', 
+            'AD.Include.Type', 
+            'AD.Include.Name', 
             'AD.Property.ToMonitor',
             'AD.Property.InReport',
             'SendMail.To',
@@ -105,8 +106,9 @@ Describe 'send an e-mail to the admin when' {
                         ToMonitor = @('Office') 
                         InReport  = @('SamAccountName', 'Office', 'Title')
                     }
-                    OU       = @{
-                        Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    Include  = @{
+                        Type = 'OU'
+                        Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                     }
                 }
                 SendMail = @{
@@ -136,8 +138,9 @@ Describe 'send an e-mail to the admin when' {
                         ToMonitor = @('Office') 
                         InReport  = @('SamAccountName', 'Office', 'foobar')
                     }
-                    OU       = @{
-                        Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    Include  = @{
+                        Type = 'OU'
+                        Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                     }
                 }
                 SendMail = @{
@@ -164,8 +167,9 @@ Describe 'send an e-mail to the admin when' {
                         ToMonitor = @('foobar')
                         InReport  = @('SamAccountName', 'Office', 'Title')
                     }
-                    OU       = @{
-                        Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    Include  = @{
+                        Type = 'OU'
+                        Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                     }
                 }
                 SendMail = @{
@@ -192,9 +196,12 @@ Describe 'send an e-mail to the admin when' {
                         ToMonitor = @('Office') 
                         InReport  = @('SamAccountName', 'Office', 'Title')
                     }
-                    OU       = @{
-                        Include = @('OU=Wrong,DC=contoso,DC=com')
-                        Exclude = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    Include  = @{
+                        Type = 'OU'
+                        Name = @('OU=Wrong,DC=contoso,DC=com')
+                    }
+                    Exclude  = @{
+                        OU = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                     }
                 }
                 SendMail = @{
@@ -205,7 +212,7 @@ Describe 'send an e-mail to the admin when' {
             $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
             
             Mock Test-ADOuExistsHC { $false } -ParameterFilter {
-                $Name -eq $testJsonFile.AD.OU.Include
+                $Name -eq $testJsonFile.AD.Include.Name
             }
             
             .$testScript @testParams
@@ -225,9 +232,12 @@ Describe 'send an e-mail to the admin when' {
                         ToMonitor = @('Office') 
                         InReport  = @('SamAccountName', 'Office', 'Title')
                     }
-                    OU       = @{
-                        Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
-                        Exclude = @('OU=Wrong,DC=contoso,DC=com')
+                    Include  = @{
+                        Type = 'OU'
+                        Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                    }
+                    Exclude  = @{
+                        OU = @('OU=Wrong,DC=contoso,DC=com')
                     }
                 }
                 SendMail = @{
@@ -238,14 +248,14 @@ Describe 'send an e-mail to the admin when' {
             $testJsonFile | ConvertTo-Json -Depth 3 | Out-File @testOutParams
             
             Mock Test-ADOuExistsHC { $false } -ParameterFilter {
-                $Name -eq $testJsonFile.AD.OU.Exclude
+                $Name -eq $testJsonFile.AD.Exclude.OU
             }
             
             .$testScript @testParams
                         
             Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                 (&$MailAdminParams) -and 
-                ($Message -like "*OU 'OU=Wrong,DC=contoso,DC=com' defined in 'AD.OU.Exclude' does not exist*")
+                ($Message -like "*OU 'OU=Wrong,DC=contoso,DC=com' defined in 'AD.Exclude.OU' does not exist*")
             }
             Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
                 $EntryType -eq 'Error'
@@ -261,8 +271,9 @@ Describe 'send an e-mail to the admin when' {
                     ToMonitor = @('Office')
                     InReport  = @('SamAccountName', 'Office', 'Title') 
                 }
-                OU       = @{
-                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                Include  = @{
+                    Type = 'OU'
+                    Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
             SendMail = @{
@@ -444,8 +455,9 @@ Describe 'when the script runs for the first time' {
                     ToMonitor = @('Office') 
                     InReport  = @('SamAccountName', 'Office', 'Title')
                 }
-                OU       = @{
-                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                Include  = @{
+                    Type = 'OU'
+                    Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
             SendMail = @{
@@ -460,7 +472,7 @@ Describe 'when the script runs for the first time' {
     Context 'collect all AD user accounts' {
         It 'call Get-AdUser with the correct arguments' {
             Should -Invoke Get-AdUser -Scope Describe -Times 1 -Exactly -ParameterFilter {
-                ($SearchBase -eq $testJsonFile.AD.OU.Include)
+                ($SearchBase -eq $testJsonFile.AD.Include.Name)
             }
         }
     }
@@ -858,8 +870,9 @@ Describe 'when the script runs after a snapshot was created' {
                     ToMonitor = @('Description', 'Title')
                     InReport  = @('*')
                 }
-                OU       = @{
-                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                Include  = @{
+                    Type = 'OU'
+                    Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
             SendMail = @{
@@ -1845,8 +1858,9 @@ Describe 'monitor only the requested AD properties' {
                     ToMonitor = @('Description')
                     InReport  = @('Office', 'Title')
                 }
-                OU       = @{
-                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                Include  = @{
+                    Type = 'OU'
+                    Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
             SendMail = @{
@@ -1981,8 +1995,9 @@ Describe 'export only the requested AD properties' {
                     ToMonitor = @('Description', 'Title')
                     InReport  = @('Office')
                 }
-                OU       = @{
-                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                Include  = @{
+                    Type = 'OU'
+                    Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
             SendMail = @{
@@ -2156,8 +2171,9 @@ Describe 'send a mail with SendMail.When set to Always when' {
                     ToMonitor = @('Description', 'Title')
                     InReport  = @('Office')
                 }
-                OU       = @{
-                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                Include  = @{
+                    Type = 'OU'
+                    Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
             SendMail = @{
@@ -2331,8 +2347,9 @@ Describe 'with SendMail.When set to OnlyWhenChangesAreFound' {
                     ToMonitor = @('Description', 'Title')
                     InReport  = @('Office')
                 }
-                OU       = @{
-                    Include = @('OU=BEL,OU=EU,DC=contoso,DC=com')
+                Include  = @{
+                    Type = 'OU'
+                    Name = @('OU=BEL,OU=EU,DC=contoso,DC=com')
                 }
             }
             SendMail = @{
