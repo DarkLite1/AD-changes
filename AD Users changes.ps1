@@ -781,8 +781,14 @@ End {
                 }
             ),
             $(
-                $adIncludeName | ConvertTo-OuNameHC -OU | Sort-Object |
-                ConvertTo-HtmlListHC -Header "$adIncludeType`:"
+                if ($adIncludeType -eq 'OU') {
+                    $adIncludeName | ConvertTo-OuNameHC -OU | Sort-Object |
+                    ConvertTo-HtmlListHC -Header "$adIncludeType`:"
+                }
+                else {
+                    $adIncludeName | Sort-Object |
+                    ConvertTo-HtmlListHC -Header "$adIncludeType`:"
+                }
             )
             
             $M = "Send mail`r`n- Header:`t{0}`r`n- To:`t`t{1}`r`n- Subject:`t{2}" -f 
