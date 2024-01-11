@@ -35,7 +35,7 @@ Describe 'send an e-mail to the admin when' {
         $MailAdminParams = {
             ($To -eq $testParams.ScriptAdmin) -and ($Priority -eq 'High') -and 
             ($Subject -eq 'FAILURE')
-        }    
+        }
     }
     It 'the log folder cannot be created' {
         $testNewParams = $testParams.clone()
